@@ -1,14 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="6b015d71-872d-446d-bfa7-c04fb32ac805" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/BotBukaneros.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/BotBukaneros.iml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/bot.py" beforeDir="false" afterPath="$PROJECT_DIR$/bot.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/comando.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/evento.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/evento.py" afterDir="false" />
-    </list>
+    <list default="true" id="6b015d71-872d-446d-bfa7-c04fb32ac805" name="Default Changelist" comment="" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -98,10 +91,10 @@
     <servers />
   </component>
   <component name="WindowStateProjectService">
-    <state x="683" y="357" width="599" height="390" key="#com.intellij.fileTypes.FileTypeChooser" timestamp="1581777326599">
+    <state x="683" y="357" width="623" height="390" key="#com.intellij.fileTypes.FileTypeChooser" timestamp="1581805967851">
       <screen x="55" y="27" width="1865" height="1053" />
     </state>
-    <state x="683" y="357" width="599" height="390" key="#com.intellij.fileTypes.FileTypeChooser/55.27.1865.1053@55.27.1865.1053" timestamp="1581777326599" />
+    <state x="683" y="357" width="623" height="390" key="#com.intellij.fileTypes.FileTypeChooser/55.27.1865.1053@55.27.1865.1053" timestamp="1581805967851" />
     <state x="1179" y="336" width="520" height="695" key="#xdebugger.evaluate" timestamp="1581804432913">
       <screen x="55" y="27" width="1865" height="1053" />
     </state>
@@ -142,10 +135,10 @@
       <screen x="55" y="27" width="1865" height="1053" />
     </state>
     <state width="1200" height="344" key="GridCell.Tab.1.right/55.27.1865.1053@55.27.1865.1053" timestamp="1581804437645" />
-    <state x="476" y="188" key="SettingsEditor" timestamp="1581774506626">
+    <state x="8" y="138" key="SettingsEditor" timestamp="1581805922763">
       <screen x="55" y="27" width="1865" height="1053" />
     </state>
-    <state x="476" y="188" key="SettingsEditor/55.27.1865.1053@55.27.1865.1053" timestamp="1581774506626" />
+    <state x="8" y="138" key="SettingsEditor/55.27.1865.1053@55.27.1865.1053" timestamp="1581805922763" />
     <state x="548" y="407" key="com.intellij.ide.util.TipDialog" timestamp="1581767885901">
       <screen x="55" y="27" width="1865" height="1053" />
     </state>
