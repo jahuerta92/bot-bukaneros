@@ -1,94 +1,265 @@
 from collections import namedtuple
-from datetime import datetime
+from datetime import date, timedelta
+from copy import copy
+
+import unidecode
 import re
 
 Argumento = namedtuple('Argumento', 'alias name default finder dtype')
-Horario = namedtuple('Horario', 'hour minute')
 
-class Campo(Argumento):
+LEGAL_DAYS = [['lunes', 'l', 'lun', 'Lunes'],
+              ['martes', 'm', 'mar', 'Martes'],
+              ['miercoles', 'x', 'mie', 'Miércoles'],
+              ['jueves', 'j', 'jue', 'Jueves'],
+              ['viernes', 'v', 'vie', 'Viernes'],
+              ['sabado', 's', 'sab', 'sábados', 'Sábado'],
+              ['domingo', 'd', 'dom', 'Domingo']]
+
+LEGAL_DAYS_SET = set([item for sublist in LEGAL_DAYS for item in sublist])
+
+
+class Campo:
+    alias = None
+    name = None
+    default = None
+    finder = None
+    dtype = None
+
     def __init__(self, *args, **kwargs):
-        super(Campo, self).__init__(*args, **kwargs)
+        self.alias = kwargs['alias']
+        self.name = kwargs['name']
+        self.default = kwargs['default']
+        self.finder = kwargs['finder']
+        self.dtype = kwargs['dtype']
+
+    def __call__(self, *args, **kwargs):
+        return self.dtype(args[0])
 
     def find_value(self, text):
-        value = self.finder.findall(text)[0]
-        casted_value = self.dtype(value)
+        values = self.finder.findall(text)
+        if len(values) is 0:
+            return None
+        casted_value = self.dtype(values[0])
         return casted_value
 
-ARGUMENT_TYPES = {'EventoBukanero': Campo(alias='t', name='tipo', default='Partida de rol', format='[EventoBukanero] %s.',
-                                          regex=re.compile(r'\[EventoBukanero\]([a-zA-Z| ]+)', re.IGNORECASE),
-                                          dtype=str),
-                  'Juego': Campo(alias='a', name='id', default=None,
-                                 finder=re.compile(r'Juego: ([^\s]+) -', re.IGNORECASE),
-                                 dtype=str),
-                  'Nombre': Campo(alias='n', name='nombre', default=None,
-                                  finder=re.compile(r'Nombre: ([^\-]+) -', re.IGNORECASE)),
-                  'Dia': Campo(alias='d', name='dia', default='auto',
-                               finder=re.compile(r'Dia: [a-zA-Z]+ (\d+/\d+/\d+) -', re.IGNORECASE),
-                               dtype=datetime), #ATENCION, TIPO DE DATOS MIXTO
-                  'Inicio': Campo(alias='i', name='inicio', default=Horario(hour=17, minute=0),
-                                  finder=re.compile(r'Inicio: (\d+:\d+) -', re.IGNORECASE),
-                                  dtype=datetime), #ATENCION, TIPO MIXTO
-                  'Fin': Campo(alias='f', name='fin', default=Horario(hour=21, minute=0),
-                               finder=re.compile(r'Fin: (\d+:\d+) -', re.IGNORECASE),
-                               dtype=datetime),
-                  'Director': Campo(alias='D', name='director', default='auto',
-                                    finder=re.compile(r'Fin: ([^\-]+) ?-', re.IGNORECASE),
-                                    dtype=str),
-                  'Jugador': Campo(alias='j', name='jugador', default='auto',
-                                   finder=re.compile(r'- ?([^\n]+)\n', re.IGNORECASE),
-                                   dtype=str),
-                  'Maximo': Campo(alias='m', name='director', default=6,
-                                  finder = re.compile(r'Maximo: (d+) [\-|\n]', re.IGNORECASE),
-                                  dtype=int),
-                  'Otros': Campo(alias='o', name='otros', default='nothing',
-                                 finder=re.compile(r'Otros: ([^\-]+) \n', re.IGNORECASE),
-                                 dtype=str)}
+    def find_all(self, text):
+        return self.finder.findall(text)
 
-#if tp not in ARGUMENT_TYPES.keys():
-#    raise Exception('Nombre del argumento no existe:\t{}'.format(tp))
 
-#arg_type = ARGUMENT_TYPES[tp]
+class Hora:
+    def __init__(self, *args, **kwargs):
+        if len(args) == 0:
+            self.hour = kwargs['hour']
+            self.minute = kwargs['minute']
+        elif isinstance(args[0], str):
+            tmp = args[0].split(':')
+            self.hour = int(tmp[0])
+            self.minute = 0 if len(tmp) == 1 else int(tmp[1])
 
-#if arg_type.default is None and value is None:
-#    raise Exception('Hace falta un valor para el campo {}'.format(tp))
-#elif value is None:
-#    self.val = deepcopy(arg_type.default)
-#else:
-#    self.val = value
+    def __str__(self):
+        return '{:02}:{:02}'.format(self.hour, self.minute)
 
-#self.arg = arg_type
-#self.type = tp
 
+class Dia:
+    def __init__(self, *args, **kwargs):
+        if isinstance(args[0], Dia):
+            self.date = copy(args[0].date)
+
+        elif isinstance(args[0], date):
+            self.date = copy(args[0])
+
+        elif isinstance(args[0], str):
+            today = date.today()
+
+            if unidecode.unidecode(args[0]).lower() in [item for sublist in LEGAL_DAYS for item in sublist]:
+                for idx, days in enumerate(LEGAL_DAYS):
+                    if unidecode.unidecode(args[0]).lower() in days:
+                        weekday_idx = idx
+                time_diff = 7 - today.weekday()
+                increment = timedelta(days=7) if today.weekday() == weekday_idx else timedelta(
+                    days=time_diff + weekday_idx)
+                target_date = today + increment
+
+                kwargs['day'] = target_date.day
+                kwargs['month'] = target_date.month
+                kwargs['year'] = target_date.year
+
+            elif len(args[0].split('/')) > 1:
+                try:
+                    tmp = args[0].split('/')
+                    kwargs['day'] = int(tmp[0])
+                    kwargs['month'] = int(tmp[1])
+                except:
+                    raise Exception('Dia y Mes requeridos')
+
+                if len(tmp) == 3:
+                    kwargs['year'] = int(tmp[2])
+                else:
+                    if today.month > int(tmp[1]):
+                        kwargs['year'] = today.year + 1
+                    else:
+                        kwargs['year'] = today.year
+            else:
+                raise Exception('No se puede reconocer el string como fecha')
+            self.date = date(day=kwargs['day'], month=kwargs['month'], year=kwargs['year'])
+
+    def __str__(self):
+        i = self.date.weekday()
+        weekday = LEGAL_DAYS[i][-1]
+        return '{} {:02}/{:02}/{:04}'.format(weekday, self.date.day, self.date.month, self.date.year)
+
+
+ARGUMENT_TYPES = {
+    'EventoBukanero': Campo(alias='t', name='tipo', default='Partida de rol',
+                            finder=re.compile(r'\[EventoBukanero\] ?([a-zA-Z| ]+)', re.IGNORECASE),
+                            dtype=str),
+    'Id': Campo(alias='a', name='id', default=None,
+                finder=re.compile(r'Id: ([^\s]+) ·', re.IGNORECASE),
+                dtype=str),
+    'Nombre': Campo(alias='n', name='nombre', default=None,
+                    finder=re.compile(r'Nombre: ([^·]+) ·', re.IGNORECASE),
+                    dtype=str),
+    'Dia': Campo(alias='d', name='dia', default=None,
+                 finder=re.compile(r'Dia: [^\s]+ (\d+/\d+/\d+) ·', re.IGNORECASE),
+                 dtype=Dia),  # ATENCION, TIPO DE DATOS MIXTO
+    'Inicio': Campo(alias='i', name='inicio', default=Hora(hour=17, minute=0),
+                    finder=re.compile(r'Inicio: (\d+:\d+) ·', re.IGNORECASE),
+                    dtype=Hora),  # ATENCION, TIPO MIXTO
+    'Fin': Campo(alias='f', name='fin', default=Hora(hour=21, minute=0),
+                 finder=re.compile(r'Fin: (\d+:\d+) ·', re.IGNORECASE),
+                 dtype=Hora),  # ATENCION, TIPO MIXTO
+    'Director': Campo(alias='D', name='director', default=None,
+                      finder=re.compile(r'Director: ([^·]+) ·', re.IGNORECASE),
+                      dtype=str),
+    'Jugadores': Campo(alias='j', name='jugador', default=[],
+                       finder=re.compile(r'- ?([^\n]+) ?\n', re.IGNORECASE),
+                       dtype=str),
+    'Maximo': Campo(alias='m', name='maximo', default=6,
+                    finder=re.compile(r'Maximo: (\d+) ?[·|\n]', re.IGNORECASE),
+                    dtype=int),
+    'Notas': Campo(alias='N', name='notas', default='nothing',
+                   finder=re.compile(r'Notas: ([^·|\n]+) \n', re.IGNORECASE),
+                   dtype=str)}
+
+
+# -t Juego de Rol --id D&D -n Strahd in da hous -i 18:00 --fin 17:15 -D Javi --maximo 666
 
 class Evento:
     event_dict = None
 
-    # [EventoBukanero] Partida de rol. Nombre: id - Partida: name - Dia: date - Inicio: start - Fin: end - Dirige: director - Maximo: max - other /n
-    # [Jugadores] /n
-    # - players[0]/n
-    # - players[1]/n
-    # - players[2]/n
-
     def __init__(self, raw_string=None, *args, **kwargs):
         if raw_string is not None:
             self.event_dict = self.parse(raw_string)
+            if self.event_dict['Notas'] is None:
+                del self.event_dict['Notas']
+            self.event_dict['Jugadores'] = [item for item in self.event_dict['Jugadores'] if len(item) > 1]
+
         else:
-        self.id = kwargs['Juego']
-        self.name = kwargs['Nombre']
-        self.date = kwargs['Dia']
-        self.start = kwargs['Inicio']
-        self.end = kwargs['Fin']
-        self.director = kwargs['Director']
-        #self.players = kwargs['Jugadores']
-        self.type = kwargs['EventoBukanero']
-        self.max = kwargs['Maximo']
-        self.other = kwargs['Otros']
+            ids, inputs = ARGUMENT_TYPES.keys(), kwargs.keys()
+            defaults = [key for key in ids if kwargs[key] is None]
+            if any(ARGUMENT_TYPES[k].default for k in defaults) is None:
+                raise Exception('Faltan argumentos sin default')
+
+            self.event_dict = dict()
+            for k in ids:
+                self.event_dict[k] = copy(ARGUMENT_TYPES[k].default) if k in defaults else ARGUMENT_TYPES[k](kwargs[k])
+
+            if self.event_dict['Notas'] == 'nothing':
+                del self.event_dict['Notas']
+
+    def __eq__(self, other):
+        return self.event_dict['Id'] == other.event_dict['Id']
 
     def __str__(self):
-        pass
+
+        # EJEMPLO DE EVENTO
+        # [EventoBukanero] Partida de rol. Id: D&D · Nombre: La Maldición de Strahd · Dia: Miércoles 12/02/2020 · Inicio: 15:30 · Fin: 19:30 · Director: Javi · Maximo: 5 · Notas: Hola caracola \n
+        # [Jugadores]
+        # - John
+        # - Cesar
+        # - Jolimbo
+        # -
+        # -
+
+        if 'Notas' not in self.event_dict.keys():
+            str_otros = ''
+            str_maximo = 'Maximo: %d \n' % self.event_dict['Maximo']
+        else:
+            str_otros = ' Notas: %s \n' % self.event_dict['Notas']
+            str_maximo = 'Maximo: %d ·' % self.event_dict['Maximo']
+
+        players_list = ['- {}'.format(player) for player in self.event_dict['Jugadores']]
+        if len(players_list) < self.event_dict['Maximo']:
+            ending = ['-'] * (self.event_dict['Maximo'] - len(players_list))
+        else:
+            ending = []
+        str_jugadores = '\n'.join(players_list + ending)
+
+        fmt = '''
+[EventoBukanero] {}. Id: {} · Nombre: {} · Dia: {} · Inicio: {} · Fin: {} · Director: {} · {}{}[Jugadores]
+{}
+        '''
+        return fmt.format(self.event_dict['EventoBukanero'],
+                          self.event_dict['Id'],
+                          self.event_dict['Nombre'],
+                          self.event_dict['Dia'],
+                          self.event_dict['Inicio'],
+                          self.event_dict['Fin'],
+                          self.event_dict['Director'],
+                          str_maximo,
+                          str_otros,
+                          str_jugadores)
 
     def parse(self, raw_string):
         parsed_dict = dict()
 
-        parsed_dict['EventoBukanero'] = Campo(tp= 'EventoBukanero', value=)
+        parsed_dict['EventoBukanero'] = ARGUMENT_TYPES['EventoBukanero'].find_value(raw_string)
+        parsed_dict['Id'] = ARGUMENT_TYPES['Id'].find_value(raw_string)
+        parsed_dict['Nombre'] = ARGUMENT_TYPES['Nombre'].find_value(raw_string)
+        parsed_dict['Dia'] = ARGUMENT_TYPES['Dia'].find_value(raw_string)
+        parsed_dict['Inicio'] = ARGUMENT_TYPES['Inicio'].find_value(raw_string)
+        parsed_dict['Fin'] = ARGUMENT_TYPES['Fin'].find_value(raw_string)
+        parsed_dict['Director'] = ARGUMENT_TYPES['Director'].find_value(raw_string)
+        parsed_dict['Jugadores'] = ARGUMENT_TYPES['Jugadores'].find_all(raw_string)
+        parsed_dict['Maximo'] = ARGUMENT_TYPES['Maximo'].find_value(raw_string)
+        parsed_dict['Notas'] = ARGUMENT_TYPES['Notas'].find_value(raw_string)
+
         return parsed_dict
+
+    def new_player(self, player):
+        simple_players = [unidecode.unidecode(item).lower() for item in self.event_dict['Jugadores']]
+        simple_player = unidecode.unidecode(player).lower()
+        if self.event_dict['Maximo'] <= len(self.event_dict['Jugadores']):
+            return False
+        elif simple_player in simple_players:
+            return False
+        else:
+            self.event_dict['Jugadores'].append(player)
+            return True
+
+    def remove_player(self, player):
+        simple_players = [unidecode.unidecode(item).lower() for item in self.event_dict['Jugadores']]
+        simple_player = unidecode.unidecode(player).lower()
+        if simple_player not in simple_players:
+            return False
+        else:
+            idx = simple_players.index(simple_player)
+            self.event_dict['Jugadores'].remove(self.event_dict['Jugadores'][idx])
+            return True
+
+    def summary(self):
+        return self.event_dict['Id'], str(self.event_dict['Dia']), ' · '.join(self.event_dict['Jugadores'])
+
+# str_event = '[EventoBukanero] Partida de rol. Id: D&D · Nombre: La Maldición de Strahd · Dia: Miércoles 12/02/2020 · Inicio: 15:30 · Fin: 19:30 · Director: Javi · Maximo: 5 · Notas: Hola caracola \n [Jugadores] \n- John \n - '
+# parsed_event = Evento(str_event)
+
+# str_event_rep = str(parsed_event)
+# parsed_event_rep = Evento(str_event_rep)
+
+# raw_event = Evento(Id='Flipas',
+#                   Nombre='La muerte de dios',
+#                   Dia='27/02',
+#                   Director='Joseramon',
+#                   Notas='Viva españa')
+
+# print(raw_event)
