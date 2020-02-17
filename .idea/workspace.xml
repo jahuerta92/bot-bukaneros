@@ -4,7 +4,6 @@
     <list default="true" id="6b015d71-872d-446d-bfa7-c04fb32ac805" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/bot.py" beforeDir="false" afterPath="$PROJECT_DIR$/bot.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/evento.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/evento.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -148,9 +147,9 @@
       <screen x="55" y="27" width="1865" height="1053" />
     </state>
     <state x="142" y="119" key="SettingsEditor/55.27.1865.1053@55.27.1865.1053" timestamp="1581806050298" />
-    <state x="548" y="407" key="com.intellij.ide.util.TipDialog" timestamp="1581950570540">
+    <state x="548" y="407" key="com.intellij.ide.util.TipDialog" timestamp="1581975865850">
       <screen x="55" y="27" width="1865" height="1053" />
     </state>
-    <state x="548" y="407" key="com.intellij.ide.util.TipDialog/55.27.1865.1053@55.27.1865.1053" timestamp="1581950570540" />
+    <state x="548" y="407" key="com.intellij.ide.util.TipDialog/55.27.1865.1053@55.27.1865.1053" timestamp="1581975865850" />
   </component>
 </project>

@@ -1,9 +1,12 @@
 import asyncio
 import discord
+import unidecode
+
 from src.evento import ARGUMENT_TYPES, LEGAL_DAYS_SET, Evento, Dia
 
 from discord.ext.commands import Bot
 from datetime import date
+
 
 BOT_PREFIX = "+"
 TOKEN = 'NTQwNTA5MDU3MTc0NDcwNjg2.Xkf4_g.fOur5nnRHLhBGUnTh1nfqSgmFGw'  # Get at discordapp.com/developers/applications/me
@@ -11,6 +14,10 @@ TAG = '[EventoBukanero]'
 bot = Bot(command_prefix=BOT_PREFIX,
           description='Organiza las partidas de rol. Si no conoces los comandos usa ++ayuda')
 
+def simple_cmp(a,b):
+    a_sub = unidecode.unidecode(a).lower()
+    b_sub = unidecode.unidecode(b).lower()
+    return a_sub == b_sub
 
 def parse(*args, optional_fields, required_fields):
     opt_fields = [('-' + ARGUMENT_TYPES[k].alias, '--' + ARGUMENT_TYPES[k].name) for k in optional_fields]
@@ -101,7 +108,7 @@ async def apuntar(ctx, idnt=None, *args):
             "Si usas *+plantilla* te mandaré un ejemplo de como tienen que estar escritos los eventos.")
         return False
 
-    this_events = [event for event in old_events if event.event_dict['Id'] == idnt]
+    this_events = [event for event in old_events if simple_cmp(event.event_dict['Id'], idnt)]
     if len(this_events) < 1:
         await ctx.send("*Error*: No existe la partida *{}* \n".format(idnt))
         return False
@@ -154,7 +161,7 @@ async def quitar(ctx, idnt=None, *args):
             "Si usas *+plantilla* te mandaré un ejemplo de como tienen que estar escritos los eventos.")
         return False
 
-    this_events = [event for event in old_events if event.event_dict['Id'] == idnt]
+    this_events = [event for event in old_events if simple_cmp(event.event_dict['Id'], idnt)]
     if len(this_events) < 1:
         await ctx.send("*Error*: No existe la partida *{}* \n".format(idnt))
         return False
@@ -262,7 +269,7 @@ async def anular(ctx, idnt=None, *args):
                        "Si usas *+plantilla* te mandaré un ejemplo de como tienen que estar escritos los eventos.")
         return False
 
-    this_events = [event for event in old_events if event.event_dict['Id'] == idnt]
+    this_events = [event for event in old_events if simple_cmp(event.event_dict['Id'], idnt)]
 
     if len(this_events) < 1:
         await ctx.send("*Error*: No existe la partida *{}* \n".format(idnt))
