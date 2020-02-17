@@ -19,6 +19,36 @@ LEGAL_DAYS_SET = set([item for sublist in LEGAL_DAYS for item in sublist])
 
 
 class Campo:
+    """Clase Campo para la gestion de busqueda de elemntos en un string
+
+    Parameters
+    ----------
+    alias : str
+        Letra que define el campo
+    name : str
+        Nombre extendido del campo
+    default: object
+        Valor por defecto que puede tomar el campo
+    finder: re
+        Expresion regular de busqueda en un string
+    dtype: object
+        Clase a la que pertenece el campo
+
+    Attributes
+    ----------
+    alias : str
+        Letra que define el campo
+    name : str
+        Nombre extendido del campo
+    default:
+        Valor por defecto que puede tomar el campo
+    finder: re
+        Expresion regular de busqueda en un string
+    dtype:
+        Clase a la que pertenece el campo
+    """
+
+
     alias = None
     name = None
     default = None
@@ -26,6 +56,25 @@ class Campo:
     dtype = None
 
     def __init__(self, *args, **kwargs):
+        """Generador de un campo
+
+        Parameters
+        ----------
+        alias : str
+            Letra que define el campo
+        name : str
+            Nombre extendido del campo
+        default: object
+            Valor por defecto que puede tomar el campo
+        finder: re
+            Expresion regular de busqueda en un string
+        dtype: object
+            Clase a la que pertenece el campo
+
+        Returns
+        -------
+        None
+        """
         self.alias = kwargs['alias']
         self.name = kwargs['name']
         self.default = kwargs['default']
@@ -36,6 +85,19 @@ class Campo:
         return self.dtype(args[0])
 
     def find_value(self, text):
+        """Usa el buscador particular de self.finder para encontrar el valor
+        en el string dado
+
+        Parameters
+        ----------
+        text : str
+            Cadena de texto donde buscar el campo actual
+
+        Returns
+        -------
+        casted_value:
+            Valor encontrado con el dtype indicado del campo
+        """
         values = self.finder.findall(text)
         if len(values) is 0:
             return None
@@ -43,10 +105,38 @@ class Campo:
         return casted_value
 
     def find_all(self, text):
+        """Usa el buscador particular de self.finder para encontrar el valor
+        en el string dado
+
+        Parameters
+        ----------
+        text : str
+            Cadena de texto donde buscar el campo actual
+
+        Returns
+        -------
+        casted_value:
+            Lista de valores encontrados, siempre en string
+        """
         return self.finder.findall(text)
 
 
 class Hora:
+    """Clase Hora para la gestion de hora-minuto y su lectura
+
+    Parameters
+    ----------
+    args:
+        Una de dos opciones, una hora y un minuto o un string de formato 'MM' / 'HH:MM'
+
+    Attributes
+    ----------
+    hour : int
+        Letra que define el campo
+    minute : int
+        Nombre extendido del campo
+
+    """
     def __init__(self, *args, **kwargs):
         if len(args) == 0:
             self.hour = kwargs['hour']
@@ -61,6 +151,22 @@ class Hora:
 
 
 class Dia:
+    """Clase Hora para la gestion de la fecha y su lectira
+
+    Parameters
+    ----------
+    args:
+        Una de dos opciones, un objeto Dia, un objeto date o un string de formato DD/MM / DD/MM/YY / Jueves.
+        Se intentará encontrar una fecha adecuada automáticamente.
+
+    Attributes
+    ----------
+    hour : int
+        Letra que define el campo
+    minute : int
+        Nombre extendido del campo
+
+    """
     def __init__(self, *args, **kwargs):
         if isinstance(args[0], Dia):
             self.date = copy(args[0].date)
@@ -111,49 +217,75 @@ class Dia:
 
 ARGUMENT_TYPES = {
     'EventoBukanero': Campo(alias='t', name='tipo', default='Partida de rol',
-                            finder=re.compile(r'\[EventoBukanero\] ?([a-zA-Z| ]+)', re.IGNORECASE),
+                            finder=re.compile(r'\[EventoBukanero\] *([\w| ]+).', re.IGNORECASE),
                             dtype=str),
     'Id': Campo(alias='a', name='id', default=None,
-                finder=re.compile(r'Id: ([^\s]+) ·', re.IGNORECASE),
+                finder=re.compile(r'Id: ([^\s]+) [·|\n]', re.IGNORECASE),
                 dtype=str),
     'Nombre': Campo(alias='n', name='nombre', default=None,
-                    finder=re.compile(r'Nombre: ([^·]+) ·', re.IGNORECASE),
+                    finder=re.compile(r'Nombre: ([^·]+) [·|\n]', re.IGNORECASE),
                     dtype=str),
     'Dia': Campo(alias='d', name='dia', default=None,
-                 finder=re.compile(r'Dia: [^\s]+ (\d+/\d+/\d+) ·', re.IGNORECASE),
+                 finder=re.compile(r'Dia: *[^\s]+ (\d+/\d+/\d+) *[·|\n]', re.IGNORECASE),
                  dtype=Dia),  # ATENCION, TIPO DE DATOS MIXTO
     'Inicio': Campo(alias='i', name='inicio', default=Hora(hour=17, minute=0),
-                    finder=re.compile(r'Inicio: (\d+:\d+) ·', re.IGNORECASE),
+                    finder=re.compile(r'Inicio: *(\d+:\d+) *[·|\n]', re.IGNORECASE),
                     dtype=Hora),  # ATENCION, TIPO MIXTO
     'Fin': Campo(alias='f', name='fin', default=Hora(hour=21, minute=0),
-                 finder=re.compile(r'Fin: (\d+:\d+) ·', re.IGNORECASE),
+                 finder=re.compile(r'Fin: *(\d+:\d+) *[·|\n]', re.IGNORECASE),
                  dtype=Hora),  # ATENCION, TIPO MIXTO
     'Director': Campo(alias='D', name='director', default=None,
-                      finder=re.compile(r'Director: ([^·]+) ·', re.IGNORECASE),
+                      finder=re.compile(r'Director: ([^·]+) [·|\n]', re.IGNORECASE),
                       dtype=str),
     'Jugadores': Campo(alias='j', name='jugador', default=[],
-                       finder=re.compile(r'- ?([^\n]+) ?\n', re.IGNORECASE),
+                       finder=re.compile(r'- *([^\n]+) *\n', re.IGNORECASE),
                        dtype=str),
     'Maximo': Campo(alias='m', name='maximo', default=6,
-                    finder=re.compile(r'Maximo: (\d+) ?[·|\n]', re.IGNORECASE),
+                    finder=re.compile(r'Maximo: *(\d+) *[·|\n]', re.IGNORECASE),
                     dtype=int),
     'Notas': Campo(alias='N', name='notas', default='nothing',
-                   finder=re.compile(r'Notas: ([^·|\n]+) \n', re.IGNORECASE),
+                   finder=re.compile(r'Notas: ([^·|\n]+) [·|\n]', re.IGNORECASE),
                    dtype=str)}
 
 
 # -t Juego de Rol --id D&D -n Strahd in da hous -i 18:00 --fin 17:15 -D Javi --maximo 666
 
 class Evento:
-    event_dict = None
+    """Clase Evento para la gestion de cada evento, su reconocimiento, replicación, etc
 
-    def __init__(self, raw_string=None, *args, **kwargs):
-        if raw_string is not None:
-            self.event_dict = self.parse(raw_string)
+    Parameters
+    ----------
+    args:
+        Una de dos opciones, un String en el formato de una partida, Como el indicado a
+        continuación:
+            [EventoBukanero] Partida de rol. Id: D&D · Nombre: La Maldición de Strahd ·
+             Dia: Miércoles 12/02/2020 · Inicio: 15:30 · Fin: 19:30 · Director: Javi ·
+             Maximo: 5 · Notas: Hola caracola
+            [Jugadores]
+            - John
+            - Cesar
+            - Jolimbo
+            -
+            -
+        O un diccionario con los campos requeridos: Id, Nombre, Dia, Inicio, Fin, Director, Maximo, Notas
+
+    Attributes
+    ----------
+    event_dict : dict
+        Diccionario conteniendo todos los elementos del evento. Id, Nombre, Dia, Inicio, Fin, Director, Maximo,
+        Notas y Jugadores
+
+    """
+    event_dict = None
+    original_msg = None
+
+    def __init__(self, message=None, *args, **kwargs):
+        if message is not None:
+            self.event_dict = self.parse(message.content)
+            self.original_msg = message
             if self.event_dict['Notas'] is None:
                 del self.event_dict['Notas']
             self.event_dict['Jugadores'] = [item for item in self.event_dict['Jugadores'] if len(item) > 1]
-
         else:
             ids, inputs = ARGUMENT_TYPES.keys(), kwargs.keys()
             defaults = [key for key in ids if kwargs[key] is None]
@@ -168,19 +300,39 @@ class Evento:
                 del self.event_dict['Notas']
 
     def __eq__(self, other):
-        return self.event_dict['Id'] == other.event_dict['Id']
+        """Función identidad Evento1 == Evento2 si sus ids son similares
+
+        Parameters
+        ----------
+        other : Evento
+            Evento con el que comparar
+
+        Returns
+        -------
+        is_equal: bool
+            Booleano que indica si los eventos se pueden considerar iguales
+        """
+        simple_this = unidecode.unidecode(self.event_dict['Id']).lower()
+        simple_other = unidecode.unidecode(other.event_dict['Id']).lower()
+        is_equal = simple_this == simple_other
+        return is_equal
 
     def __str__(self):
+        """Función para representar un Evento como string
 
-        # EJEMPLO DE EVENTO
-        # [EventoBukanero] Partida de rol. Id: D&D · Nombre: La Maldición de Strahd · Dia: Miércoles 12/02/2020 · Inicio: 15:30 · Fin: 19:30 · Director: Javi · Maximo: 5 · Notas: Hola caracola \n
-        # [Jugadores]
-        # - John
-        # - Cesar
-        # - Jolimbo
-        # -
-        # -
-
+        -------
+        str_event: str
+            El evento transformado a string con el formato estandar:
+                [EventoBukanero] Partida de rol. Id: D&D · Nombre: La Maldición de Strahd ·
+                 Dia: Miércoles 12/02/2020 · Inicio: 15:30 · Fin: 19:30 · Director: Javi ·
+                 Maximo: 5 · Notas: Hola caracola
+                [Jugadores]
+                - John
+                - Cesar
+                - Jolimbo
+                -
+                -
+        """
         if 'Notas' not in self.event_dict.keys():
             str_otros = ''
             str_maximo = 'Maximo: %d \n' % self.event_dict['Maximo']
@@ -211,6 +363,19 @@ class Evento:
                           str_jugadores)
 
     def parse(self, raw_string):
+        """Función para transformar un string a Evento, hace uso de ARGUMENT_TYPES y sus objetos
+        tipo Campo.
+
+        Parameters
+        ----------
+        raw_string : str
+            String que transformar a evento
+
+        Returns
+        -------
+        parsed_dict: dict
+            Diccionario con todos loas campos de un evento
+        """
         parsed_dict = dict()
 
         parsed_dict['EventoBukanero'] = ARGUMENT_TYPES['EventoBukanero'].find_value(raw_string)
@@ -227,28 +392,61 @@ class Evento:
         return parsed_dict
 
     def new_player(self, player):
+        """Añade un jugador al evento si no ha sido añadido ya y si la partida aun tiene huecos.
+
+        Parameters
+        ----------
+        player : str
+            Nombre del jugador a añadir
+
+        Returns
+        -------
+        check: bool
+            Chequedo de si la operacion ha sido completada con exito.
+        error: str
+            Mensaje de error que enviar si la operacion no se completa
+
+        """
         simple_players = [unidecode.unidecode(item).lower() for item in self.event_dict['Jugadores']]
         simple_player = unidecode.unidecode(player).lower()
         if self.event_dict['Maximo'] <= len(self.event_dict['Jugadores']):
-            return False
+            return False,  'No se pudo añadir a {}, la lista de {} ya está llena, consulta al director.'
         elif simple_player in simple_players:
-            return False
+            return False, 'El jugador {} ya está apuntado a la lista de {}'
         else:
             self.event_dict['Jugadores'].append(player)
-            return True
+            return True, None
 
     def remove_player(self, player):
+        """Retira a un jugador de la partida
+
+        Parameters
+        ----------
+        player : str
+            Nombre del jugador a retirar
+
+        Returns
+        -------
+        check: bool
+            Chequedo de si la operacion ha sido completada con exito.
+        error: str
+            Mensaje de error que enviar si la operacion no se completa
+
+        """
         simple_players = [unidecode.unidecode(item).lower() for item in self.event_dict['Jugadores']]
         simple_player = unidecode.unidecode(player).lower()
         if simple_player not in simple_players:
-            return False
+            return False, 'El jugador {} no está apuntado a la lista de {}'
         else:
             idx = simple_players.index(simple_player)
             self.event_dict['Jugadores'].remove(self.event_dict['Jugadores'][idx])
-            return True
+            return True, None
 
     def summary(self):
         return self.event_dict['Id'], str(self.event_dict['Dia']), ' · '.join(self.event_dict['Jugadores'])
+
+    def unpin(self):
+        return self.original_msg.unpin()
 
 # str_event = '[EventoBukanero] Partida de rol. Id: D&D · Nombre: La Maldición de Strahd · Dia: Miércoles 12/02/2020 · Inicio: 15:30 · Fin: 19:30 · Director: Javi · Maximo: 5 · Notas: Hola caracola \n [Jugadores] \n- John \n - '
 # parsed_event = Evento(str_event)
