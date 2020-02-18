@@ -320,6 +320,9 @@ Bienvenido al organizador de partidas de Bukaneros. Soy el panel de ayuda de est
     embed.add_field(name='+listar',
                     value="Lista todas las partidas disponibles del servidor",
                     inline=False)
+    embed.add_field(name='+ejemplo',
+                    value="Muestra un ejemplo del formato de la partida, para copiar y pegar",
+                    inline=False)
     embed.add_field(name='+ayuda',
                     value="Es lo que estas leyendo, grumete",
                     inline=False)

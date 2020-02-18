@@ -345,7 +345,7 @@ class Evento:
             ending = ['-'] * (self.event_dict['Maximo'] - len(players_list))
         else:
             ending = []
-        str_jugadores = '\n'.join(players_list + ending)
+        str_jugadores = '\n'.join(players_list + ending) + '\n'
 
         fmt = '''
 [EventoBukanero] {}. Id: {} · Nombre: {} · Dia: {} · Inicio: {} · Fin: {} · Director: {} · {}{}[Jugadores]
