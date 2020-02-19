@@ -181,9 +181,9 @@ class Dia:
                 for idx, days in enumerate(LEGAL_DAYS):
                     if unidecode.unidecode(args[0]).lower() in days:
                         weekday_idx = idx
-                time_diff = 7 - today.weekday()
-                increment = timedelta(days=7) if today.weekday() == weekday_idx else timedelta(
-                    days=time_diff + weekday_idx)
+
+                time_diff = weekday_idx - today.weekday()
+                increment = timedelta(days=time_diff) if time_diff > 0 else timedelta(days=7 - time_diff)
                 target_date = today + increment
 
                 kwargs['day'] = target_date.day
