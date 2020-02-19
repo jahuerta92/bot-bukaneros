@@ -238,7 +238,7 @@ ARGUMENT_TYPES = {
                       finder=re.compile(r'Director: ([^·]+) [·|\n]', re.IGNORECASE),
                       dtype=str),
     'Jugadores': Campo(alias='j', name='jugador', default=[],
-                       finder=re.compile(r'- *([^\n]+) *\n', re.IGNORECASE),
+                       finder=re.compile(r'\n- *([^\n]+) *\n', re.IGNORECASE),
                        dtype=str),
     'Maximo': Campo(alias='m', name='maximo', default=6,
                     finder=re.compile(r'Maximo: *(\d+) *[·|\n]', re.IGNORECASE),
@@ -346,7 +346,7 @@ class Evento:
         else:
             ending = []
         str_jugadores = '\n'.join(players_list + ending) + '\nApuntados: {}'.format(len(self.event_dict['Jugadores']))
-                        
+
 
         fmt = '''
 [EventoBukanero] {}. Id: {} · Nombre: {} · Dia: {} · Inicio: {} · Fin: {} · Director: {} · {}{}[Jugadores]

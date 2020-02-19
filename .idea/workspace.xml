@@ -5,6 +5,7 @@
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/bot.py" beforeDir="false" afterPath="$PROJECT_DIR$/bot.py" afterDir="false" />
     </list>
+    <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -15,8 +16,8 @@
       <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/src/evento.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="184">
-              <caret line="348" column="24" lean-forward="true" selection-start-line="348" selection-start-column="24" selection-end-line="348" selection-end-column="24" />
+            <state relative-caret-position="170">
+              <caret line="243" column="40" selection-start-line="243" selection-start-column="40" selection-end-line="243" selection-end-column="40" />
               <folding>
                 <element signature="e#3210#3945#0" />
                 <element signature="e#3963#6285#0" />
@@ -28,7 +29,7 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/bot.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="187">
+            <state relative-caret-position="1904">
               <caret line="119" column="45" selection-start-line="119" selection-start-column="40" selection-end-line="119" selection-end-column="45" />
               <folding>
                 <element signature="e#0#14#0" expanded="true" />
@@ -59,6 +60,11 @@
         <option value="$PROJECT_DIR$/src/evento.py" />
       </list>
     </option>
+  </component>
+  <component name="ProjectFrameBounds" extendedState="6">
+    <option name="x" value="948" />
+    <option name="width" value="981" />
+    <option name="height" value="1092" />
   </component>
   <component name="ProjectId" id="1Xq3ehpWmQnGNN9wwtQHTK6wSVt" />
   <component name="ProjectView">
@@ -176,7 +182,6 @@
   </component>
   <component name="ToolWindowManager">
     <frame x="-7" y="-7" width="1295" height="735" extended-state="6" />
-    <editor active="true" />
     <layout>
       <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.24960254" />
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
@@ -252,23 +257,23 @@
     <state x="548" y="407" key="com.intellij.ide.util.TipDialog/55.27.1865.1053@55.27.1865.1053" timestamp="1581975865850" />
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/bot.py">
+    <entry file="file://$PROJECT_DIR$/src/evento.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="187">
-          <caret line="119" column="45" selection-start-line="119" selection-start-column="40" selection-end-line="119" selection-end-column="45" />
+        <state relative-caret-position="170">
+          <caret line="243" column="40" selection-start-line="243" selection-start-column="40" selection-end-line="243" selection-end-column="40" />
           <folding>
-            <element signature="e#0#14#0" expanded="true" />
+            <element signature="e#3210#3945#0" />
+            <element signature="e#3963#6285#0" />
           </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/evento.py">
+    <entry file="file://$PROJECT_DIR$/bot.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="184">
-          <caret line="348" column="24" lean-forward="true" selection-start-line="348" selection-start-column="24" selection-end-line="348" selection-end-column="24" />
+        <state relative-caret-position="1904">
+          <caret line="119" column="45" selection-start-line="119" selection-start-column="40" selection-end-line="119" selection-end-column="45" />
           <folding>
-            <element signature="e#3210#3945#0" />
-            <element signature="e#3963#6285#0" />
+            <element signature="e#0#14#0" expanded="true" />
           </folding>
         </state>
       </provider>
