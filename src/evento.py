@@ -183,7 +183,7 @@ class Dia:
                         weekday_idx = idx
 
                 time_diff = weekday_idx - today.weekday()
-                increment = timedelta(days=time_diff) if time_diff > 0 else timedelta(days=7 - time_diff)
+                increment = timedelta(days=time_diff) if time_diff > 0 else timedelta(days=7 + time_diff)
                 target_date = today + increment
 
                 kwargs['day'] = target_date.day
