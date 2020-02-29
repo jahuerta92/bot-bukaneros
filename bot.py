@@ -153,6 +153,7 @@ async def mover(ctx, idnt1, idnt2, *args):
 
     return True
 
+
 @bot.command(name='apuntar',
              description="Apunta a un jugador a una partida",
              aliases=['añadir', 'apuntame', 'añademe'],
@@ -284,12 +285,12 @@ async def crear(ctx, idnt=None, *args):
     if value['Dia'] is None:
         tmp = channel.name.split('-')
         if len(tmp) < 2:
-            ctx.send(
+            await ctx.send(
                 '**Error**: El dia no se puede establecer automaticamente en este canal. '
                 'Prueba a especificarlo con -d o --dia.')
             return False
         elif tmp[1] not in LEGAL_DAYS_SET:
-            ctx.send(
+            await ctx.send(
                 '**Error**: El dia no se puede establecer automaticamente en este canal. '
                 'Prueba a especificarlo con -d o --dia.')
             return False
@@ -371,8 +372,67 @@ async def anular(ctx, idnt=None, *args):
     return True
 
 
-bot.remove_command('help')
+@bot.command(name='modificar',
+             description="Modifica una partida que diriges",
+             pass_ctx=True)
+async def modificar(ctx, idnt=None, *args):
+    optional_fields = {'EventoBukanero', 'Inicio', 'Fin', 'Maximo', 'Dia', 'Notas', 'Nombre', 'Id'}
+    required_fields = set()
+    check, value = parse(*args, optional_fields=optional_fields, required_fields=required_fields)
 
+    if not check:
+        await ctx.send(value)
+        return False
+
+    if idnt is None:
+        await ctx.send('**Error**: Falta identificador de la partida, el primer argumento.')
+        return False
+
+    if len(args) < 1:
+        await ctx.send('**Error**: No se ha indicado nada que modificar.')
+        return False
+
+    author = ctx.message.author
+
+    pinned = await ctx.pins()
+
+    try:
+        old_events = [Evento(message) for message in pinned if TAG in message.content]
+    except:
+        await ctx.send("**Error**: Ha ocurrido un error al intentar recuperar los eventos.\n"
+                       "Por favor revisa que los mensajes anclados tengan el formato correcto.\n"
+                       "Si usas **+plantilla** te mandaré un ejemplo de como tienen que estar escritos los eventos.")
+        return False
+
+    this_events = [event for event in old_events if simple_cmp(event.event_dict['Id'], idnt)]
+
+    if len(this_events) < 1:
+        await ctx.send("**Error**: No existe la partida **{}** \n".format(idnt))
+        return False
+    elif len(this_events) > 1:
+        await ctx.send(
+            "**Error**: Hay múltiples partidas de **{}**, por favor revisa los mensajes anclados. \n".format(idnt))
+        return False
+
+    nick = author.nick if author.nick is not None else author.name
+
+    this_event = this_events[0]
+    if nick != this_event.event_dict['Director']:
+        await ctx.send("**Error**: No puedes modificar una partida que no diriges")
+        return False
+
+    await this_event.unpin()
+
+    for key, val in value.items():
+        if val is not None:
+            this_event.update(key, val)
+
+    new_message = await ctx.send(this_event)
+    await new_message.pin()
+
+    return True
+
+bot.remove_command('help')
 
 @bot.command(name='help',
              aliases=['ayuda', '?', 'ayudame'],
@@ -381,20 +441,39 @@ async def help(ctx):
     embed = discord.Embed(title="Botkanero", description='''
 Bienvenido al organizador de partidas de Bukaneros. Soy el panel de ayuda de este bot. Las indicaciones entre corchetes son opcionales, se rellenan automaticamente siempre que pueden.''',
                           color=0xeee657)
-
+    embed.add_field(name='Primeros pasos',
+                    value='Si eres un jugador, para apuntarte a una partida solo tienes que utilizar (+apuntar ID),'
+                          'donde la ID es el identificador de la partida, etiquetado siempre en el mensaje anclado. \n'
+                          'Si eres director tendrás que usar (+crear ID -n NOMBRE) donde ID es el identificador que'
+                          'le darás a tu partida y el NOMBRE que quieres que tenga. Si no publicas en un grupo habitual'
+                          'tendras que especificar el dia con -d DIA, diociendole que es jueves, o un dia concreto con'
+                          ' dd/mm.',
+                    inline=False)
     embed.add_field(name='+apuntar id [-j jugador][--jugador jugador]',
-                    value="Para apuntarte a la partida con ID, puedes apuntar a otra persona si incluyes -j o --jugador. \n"
+                    value="Para apuntarte a la partida con ID, puedes apuntar a otra persona si incluyes -j o --jugador.\n"
                           "Ejemplos: (+apuntar D&D -j Alberto) o (+apuntar D&D)",
                     inline=False)
     embed.add_field(name='+quitar id [-j jugador][--jugador jugador]',
-                    value="Para salirte de la partida con ID, puedes apuntar a otra persona si incluyes -j o --jugador. \n"
+                    value="Para salirte de la partida con ID, puedes apuntar a otra persona si incluyes -j o --jugador.\n"
                           "Ejemplos: (+quitar D&D -j Alberto) o (+quitar D&D)",
                     inline=False)
     embed.add_field(name='+crear id --nombre nombre de la partida [-d dd/mm][--dia dd/mm] [-i hh:mm][--inicio hh:mm]'
                          '[-f hh:mm][--fin hh:mm] [-m maximo][--maximo maximo] [-N notas][--notas notas] [-t tipo][--tipo tipo]',
                     value="Crea una partida con una id y un nombre. Si tu partida está fuera de los canales diarios indica el dia con -d. \n"
-                          "¡El resto de argumentos son opcionales! \n"
+                          "¡El resto de argumentos son opcionales! Sirven para especificar aspectos de la partida: (-d DIA), (-i INICIO), "
+                          "(-f FIN), (-m MAXIMO), (-N NOTAS), )-t TIPO_DE_EVENTO)\n"
                           'Ejemplos: (+crear D&D --nombre La maldicion -d Jueves) o (+crear D&D -n La maldicion -d Jueves -N ¡Venid antes de las 6 para hacer fichas!)',
+                    inline=False)
+    embed.add_field(name='+modificar id [-a nueva_id][--id nueva_id] [-n nombre][--nombre nombre] [-d dd/mm][--dia dd/mm]'
+                         '[-i hh:mm][--inicio hh:mm] [-f hh:mm][--fin hh:mm] [-m maximo][--maximo maximo] [-N notas]'
+                         '[--notas notas] [-t tipo][--tipo tipo]',
+                    value="Modifica al menos un campo de tu evento. Usa las etiquetas para cambiar: (-d DIA), (-i INICIO), "
+                          "(-f FIN), (-m MAXIMO), (-N NOTAS), (-t TIPO_DE_EVENTO), (-a NUEVA_ID), (-n NOMBRE)\n"
+                          'Ejemplo: (+modificar D&D -nombre Piratas -a Path)',
+                    inline=False)
+    embed.add_field(name='+mover id1 id2 [-j jugador][--jugador jugador]',
+                    value="Mueve a un jugador (tu mismo si no lo especificas) de la partida con ID1 a la partida con ID2.\n"
+                          'Ejemplos: (+mover D&D Pathfinder) o (+mover D&D Pathfinder -j Alberto)',
                     inline=False)
     embed.add_field(name='+anular id',
                     value="Anula una partida que tu dirijas."
@@ -429,7 +508,6 @@ async def plantilla(ctx):
         '- Carlos\n'
         '-')
 
-
 @bot.command(name='listar',
              description="Devuelve un listado de partidas en todo el servidor",
              pass_context=True)
@@ -455,7 +533,7 @@ async def listar(ctx):
 
     for idx, item in enumerate(event_list):
         idg, date, players = item.summary()
-        embed.add_field(name=date, value='{} --> {}'.format(idg, players), inline=False)
+        embed.add_field(name=date, value='{} · {}'.format(idg, players), inline=False)
 
     await ctx.message.author.send(embed=embed)
     return True

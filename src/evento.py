@@ -217,34 +217,34 @@ class Dia:
 
 ARGUMENT_TYPES = {
     'EventoBukanero': Campo(alias='t', name='tipo', default='Partida de rol',
-                            finder=re.compile(r'\[EventoBukanero\] *([\w| ]+).', re.IGNORECASE),
+                            finder=re.compile(r'\[EventoBukanero\] *\*{0,2}([\w| ]+)\*{0,2}.', re.IGNORECASE),
                             dtype=str),
     'Id': Campo(alias='a', name='id', default=None,
-                finder=re.compile(r'Id: ([^\s]+) [·|\n]', re.IGNORECASE),
+                finder=re.compile(r'\*{0,2}Id\*{0,2}: ([^\s]+) [·|\n]', re.IGNORECASE),
                 dtype=str),
     'Nombre': Campo(alias='n', name='nombre', default=None,
-                    finder=re.compile(r'Nombre: ([^·]+) [·|\n]', re.IGNORECASE),
+                    finder=re.compile(r'\*{0,2}Nombre\*{0,2}: ([^·]+) [·|\n]', re.IGNORECASE),
                     dtype=str),
     'Dia': Campo(alias='d', name='dia', default=None,
-                 finder=re.compile(r'Dia: *[^\s]+ (\d+/\d+/\d+) *[·|\n]', re.IGNORECASE),
+                 finder=re.compile(r'\*{0,2}Dia\*{0,2}: *[^\s]+ (\d+/\d+/\d+) *[·|\n]', re.IGNORECASE),
                  dtype=Dia),  # ATENCION, TIPO DE DATOS MIXTO
     'Inicio': Campo(alias='i', name='inicio', default=Hora(hour=17, minute=0),
-                    finder=re.compile(r'Inicio: *(\d+:\d+) *[·|\n]', re.IGNORECASE),
+                    finder=re.compile(r'\*{0,2}Inicio\*{0,2}: *(\d+:\d+) *[·|\n]', re.IGNORECASE),
                     dtype=Hora),  # ATENCION, TIPO MIXTO
     'Fin': Campo(alias='f', name='fin', default=Hora(hour=21, minute=0),
-                 finder=re.compile(r'Fin: *(\d+:\d+) *[·|\n]', re.IGNORECASE),
+                 finder=re.compile(r'\*{0,2}Fin\*{0,2}: *(\d+:\d+) *[·|\n]', re.IGNORECASE),
                  dtype=Hora),  # ATENCION, TIPO MIXTO
     'Director': Campo(alias='D', name='director', default=None,
-                      finder=re.compile(r'Director: ([^·]+) [·|\n]', re.IGNORECASE),
+                      finder=re.compile(r'\*{0,2}Director\*{0,2}: ([^·]+) [·|\n]', re.IGNORECASE),
                       dtype=str),
     'Jugadores': Campo(alias='j', name='jugador', default=[],
                        finder=re.compile(r'\n- *([^\n]+) *', re.IGNORECASE),
                        dtype=str),
     'Maximo': Campo(alias='m', name='maximo', default=6,
-                    finder=re.compile(r'Maximo: *(\d+) *[·|\n]', re.IGNORECASE),
+                    finder=re.compile(r'\*{0,2}Maximo\*{0,2}: *(\d+) *[·|\n]', re.IGNORECASE),
                     dtype=int),
     'Notas': Campo(alias='N', name='notas', default='nothing',
-                   finder=re.compile(r'Notas: ([^·|\n]+) [·|\n]', re.IGNORECASE),
+                   finder=re.compile(r'\*{0,2}Notas\*{0,2}: ([^·|\n]+) [·|\n]', re.IGNORECASE),
                    dtype=str)}
 
 
@@ -335,21 +335,26 @@ class Evento:
         """
         if 'Notas' not in self.event_dict.keys():
             str_otros = ''
-            str_maximo = 'Maximo: %d \n' % self.event_dict['Maximo']
+            str_maximo = '**Maximo**: %d \n' % self.event_dict['Maximo']
         else:
-            str_otros = ' Notas: %s \n' % self.event_dict['Notas']
-            str_maximo = 'Maximo: %d ·' % self.event_dict['Maximo']
+            str_otros = '**Notas**: %s \n' % self.event_dict['Notas']
+            str_maximo = '**Maximo**: %d \n' % self.event_dict['Maximo']
 
         players_list = ['- {}'.format(player) for player in self.event_dict['Jugadores']]
         if len(players_list) < self.event_dict['Maximo']:
             ending = ['-'] * (self.event_dict['Maximo'] - len(players_list))
         else:
             ending = []
-        str_jugadores = '\n'.join(players_list + ending) + '\nApuntados: {}'.format(len(self.event_dict['Jugadores']))
+        str_jugadores = '\n'.join(players_list + ending) + \
+                        '\n**Apuntados**: {}/{}'.format(len(self.event_dict['Jugadores']),
+                                                        self.event_dict['Maximo'])
 
 
         fmt = '''
-[EventoBukanero] {}. Id: {} · Nombre: {} · Dia: {} · Inicio: {} · Fin: {} · Director: {} · {}{}[Jugadores]
+[EventoBukanero] {}.
+**Id**: {} · **Nombre**: {} 
+**Dia**: {} · **Inicio**: {} · **Fin**: {} 
+**Director**: {} · {}{}[Jugadores]
 {}
         '''
         return fmt.format(self.event_dict['EventoBukanero'],
@@ -444,11 +449,18 @@ class Evento:
             return True, None
 
     def summary(self):
-        return self.event_dict['Id'], str(self.event_dict['Dia']), ' · '.join(self.event_dict['Jugadores'])
+        jugadores = len(self.event_dict['Jugadores'])
+        return self.event_dict['Id'], str(self.event_dict['Dia']), 'Huecos: {}/{}'.format(jugadores,
+                                                                                          self.event_dict['Maximo'])
 
     def unpin(self):
         return self.original_msg.unpin()
 
+    def update(self, key, value):
+        if key in self.event_dict.keys():
+            self.event_dict[key] = value
+            return True
+        return False
 # str_event = '[EventoBukanero] Partida de rol. Id: D&D · Nombre: La Maldición de Strahd · Dia: Miércoles 12/02/2020 · Inicio: 15:30 · Fin: 19:30 · Director: Javi · Maximo: 5 · Notas: Hola caracola \n [Jugadores] \n- John \n - '
 # parsed_event = Evento(str_event)
 
