@@ -559,4 +559,4 @@ async def on_message(message):
 
 
 bot.loop.create_task(list_servers())
-bot.run(BETA_TOKEN)
+bot.run(DEPLOY_TOKEN)
