@@ -458,7 +458,7 @@ class Evento:
 
     def update(self, key, value):
         if key in self.event_dict.keys():
-            self.event_dict[key] = value
+            self.event_dict[key] = ARGUMENT_TYPES[key](value)
             return True
         return False
 # str_event = '[EventoBukanero] Partida de rol. Id: D&D · Nombre: La Maldición de Strahd · Dia: Miércoles 12/02/2020 · Inicio: 15:30 · Fin: 19:30 · Director: Javi · Maximo: 5 · Notas: Hola caracola \n [Jugadores] \n- John \n - '
