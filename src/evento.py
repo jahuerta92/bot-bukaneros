@@ -223,7 +223,7 @@ ARGUMENT_TYPES = {
                 finder=re.compile(r'\*{0,2}Id\*{0,2}: ([^\s]+) [·|\n]', re.IGNORECASE),
                 dtype=str),
     'Nombre': Campo(alias='n', name='nombre', default=None,
-                    finder=re.compile(r'\*{0,2}Nombre\*{0,2}: ([^·]+) [·|\n]', re.IGNORECASE),
+                    finder=re.compile(r'\*{0,2}Nombre\*{0,2}: ([^·|\n]+) [·|\n]', re.IGNORECASE),
                     dtype=str),
     'Dia': Campo(alias='d', name='dia', default=None,
                  finder=re.compile(r'\*{0,2}Dia\*{0,2}: *[^\s]+ (\d+/\d+/\d+) *[·|\n]', re.IGNORECASE),
@@ -235,7 +235,7 @@ ARGUMENT_TYPES = {
                  finder=re.compile(r'\*{0,2}Fin\*{0,2}: *(\d+:\d+) *[·|\n]', re.IGNORECASE),
                  dtype=Hora),  # ATENCION, TIPO MIXTO
     'Director': Campo(alias='D', name='director', default=None,
-                      finder=re.compile(r'\*{0,2}Director\*{0,2}: ([^·]+) [·|\n]', re.IGNORECASE),
+                      finder=re.compile(r'\*{0,2}Director\*{0,2}: ([^·|\n]+) [·|\n]', re.IGNORECASE),
                       dtype=str),
     'Jugadores': Campo(alias='j', name='jugador', default=[],
                        finder=re.compile(r'\n- *([^\n]+) *', re.IGNORECASE),
