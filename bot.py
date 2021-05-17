@@ -104,14 +104,17 @@ async def mover(ctx, idnt1, idnt2, *args):
 
     pinned = await ctx.pins()
 
-    try:
-        old_events = [Evento(message) for message in pinned if TAG in message.content]
-    except:
-        await ctx.send(
-            "**Error**: Ha ocurrido un error al intentar recuperar los eventos."
-            "Por favor revisa que los mensajes anclados tengan el formato correcto."
-            "Si usas **+plantilla** te mandaré un ejemplo de como tienen que estar escritos los eventos.")
-        return False
+    old_events = []
+    for message in pinned:
+        if TAG in message.content:
+            try:
+                old_events.append(Evento(message))
+            except:
+                print("The following message produced an error:\n\n" + message.content)
+                await ctx.send("**Error**: Ha ocurrido un error al intentar recuperar los eventos.\n " 
+                               "Por favor revisa que los mensajes anclados tengan el formato correcto.\n "
+                               "Si usas **+plantilla** te mandaré un ejemplo de como tienen que estar escritos los eventos.")
+                return False
 
     this_events_1 = [event for event in old_events if simple_cmp(event.event_dict['Id'], idnt1)]
     this_events_2 = [event for event in old_events if simple_cmp(event.event_dict['Id'], idnt2)]
@@ -178,14 +181,17 @@ async def apuntar(ctx, idnt=None, *args):
 
     pinned = await ctx.pins()
 
-    try:
-        old_events = [Evento(message) for message in pinned if TAG in message.content]
-    except:
-        await ctx.send(
-            "**Error**: Ha ocurrido un error al intentar recuperar los eventos."
-            "Por favor revisa que los mensajes anclados tengan el formato correcto."
-            "Si usas **+plantilla** te mandaré un ejemplo de como tienen que estar escritos los eventos.")
-        return False
+    old_events = []
+    for message in pinned:
+        if TAG in message.content:
+            try:
+                old_events.append(Evento(message))
+            except:
+                print("The following message produced an error:\n\n" + message.content)
+                await ctx.send("**Error**: Ha ocurrido un error al intentar recuperar los eventos.\n " 
+                               "Por favor revisa que los mensajes anclados tengan el formato correcto.\n "
+                               "Si usas **+plantilla** te mandaré un ejemplo de como tienen que estar escritos los eventos.")
+                return False
 
     this_events = [event for event in old_events if simple_cmp(event.event_dict['Id'], idnt)]
     if len(this_events) < 1:
