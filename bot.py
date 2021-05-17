@@ -533,7 +533,12 @@ async def plantilla(ctx):
 async def listar(ctx):
     event_list = []
     for channel in ctx.guild.text_channels:
-        pins = await channel.pins()
+                    
+        try:
+          pins = await channel.pins()
+        except:
+          continue
+          
         for message in pins:           
             if TAG in message.content:
                 try:
