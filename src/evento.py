@@ -12,8 +12,8 @@ LEGAL_DAYS = [['lunes', 'l', 'lun', 'Lunes'],
               ['miercoles', 'x', 'mie', 'Miércoles'],
               ['jueves', 'j', 'jue', 'Jueves'],
               ['viernes', 'v', 'vie', 'Viernes'],
-              ['sabado', 's', 'sab', 'sábados', 'Sábado'],
-              ['domingo', 'd', 'dom', 'Domingo']]
+              ['sabado', 's', 'sab', 'sábados', 'Sábado', 'Sabado', 'sabados'],
+              ['domingo', 'd', 'dom', 'Domingo', 'domingos']]
 
 LEGAL_DAYS_SET = set([item for sublist in LEGAL_DAYS for item in sublist])
 
@@ -47,7 +47,6 @@ class Campo:
     dtype:
         Clase a la que pertenece el campo
     """
-
 
     alias = None
     name = None

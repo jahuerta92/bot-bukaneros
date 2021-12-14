@@ -7,9 +7,12 @@ from src.evento import ARGUMENT_TYPES, LEGAL_DAYS_SET, Evento, Dia
 from discord.ext.commands import Bot
 from datetime import date
 
+from dotenv import dotenv_values
+
+config = dotenv_values(".env")
+
 BOT_PREFIX = "+"
-BETA_TOKEN = 'NjgwNzA4NzUyNzQ3MjY2MDUy.XlD1eg.kviJenW2IPCYWpJN5j8OScZo4_U'
-DEPLOY_TOKEN = 'NTQwNTA5MDU3MTc0NDcwNjg2.Xkf4_g.fOur5nnRHLhBGUnTh1nfqSgmFGw'  # Get at discordapp.com/developers/applications/me
+# Get at discordapp.com/developers/applications/me
 TAG = '[EventoBukanero]'
 bot = Bot(command_prefix=BOT_PREFIX,
           description='Organiza las partidas de rol. Si no conoces los comandos usa ++ayuda')
@@ -78,9 +81,21 @@ def parse(*args, optional_fields, required_fields):
     return True, parsed_dict
 
 
+async def find_pinned(pinned):
+    old_events = []
+    for message in pinned:
+        if TAG in message.content:
+            try:
+                old_events.append(Evento(message))
+            except:
+                return False, None
+
+    return True, old_events
+
+
 @bot.command(name='mover',
-            description='Mueve a un jugador de una partida a otra',
-            pass_context=True)
+             description='Mueve a un jugador de una partida a otra',
+             pass_context=True)
 async def mover(ctx, idnt1, idnt2, *args):
     optional_fields = {'Jugadores'}
     required_fields = set()
@@ -104,17 +119,12 @@ async def mover(ctx, idnt1, idnt2, *args):
 
     pinned = await ctx.pins()
 
-    old_events = []
-    for message in pinned:
-        if TAG in message.content:
-            try:
-                old_events.append(Evento(message))
-            except:
-                print("The following message produced an error:\n\n" + message.content)
-                await ctx.send("**Error**: Ha ocurrido un error al intentar recuperar los eventos.\n " 
-                               "Por favor revisa que los mensajes anclados tengan el formato correcto.\n "
-                               "Si usas **+plantilla** te mandaré un ejemplo de como tienen que estar escritos los eventos.")
-                return False
+    old_events = await find_pinned(pinned)
+    if not old_events:
+        await ctx.send("**Error**: Ha ocurrido un error al intentar recuperar los eventos.\n "
+                       "Por favor revisa que los mensajes anclados tengan el formato correcto.\n "
+                       "Si usas **+plantilla** te mandaré un ejemplo de como tienen que estar escritos los eventos.")
+        return False
 
     this_events_1 = [event for event in old_events if simple_cmp(event.event_dict['Id'], idnt1)]
     this_events_2 = [event for event in old_events if simple_cmp(event.event_dict['Id'], idnt2)]
@@ -181,17 +191,12 @@ async def apuntar(ctx, idnt=None, *args):
 
     pinned = await ctx.pins()
 
-    old_events = []
-    for message in pinned:
-        if TAG in message.content:
-            try:
-                old_events.append(Evento(message))
-            except:
-                print("The following message produced an error:\n\n" + message.content)
-                await ctx.send("**Error**: Ha ocurrido un error al intentar recuperar los eventos.\n " 
-                               "Por favor revisa que los mensajes anclados tengan el formato correcto.\n "
-                               "Si usas **+plantilla** te mandaré un ejemplo de como tienen que estar escritos los eventos.")
-                return False
+    old_events = find_pinned(pinned)
+    if not old_events:
+        await ctx.send("**Error**: Ha ocurrido un error al intentar recuperar los eventos."
+                       "Por favor revisa que los mensajes anclados tengan el formato correcto."
+                       "Si usas **+plantilla** te mandaré un ejemplo de como tienen que estar escritos los eventos.")
+        return False
 
     this_events = [event for event in old_events if simple_cmp(event.event_dict['Id'], idnt)]
     if len(this_events) < 1:
@@ -237,17 +242,12 @@ async def quitar(ctx, idnt=None, *args):
         value['Jugadores'] = author.nick if author.nick is not None else author.name
 
     pinned = await ctx.pins()
-    old_events = []
-    for message in pinned:
-        if TAG in message.content:
-            try:
-                old_events.append(Evento(message))
-            except:
-                print("The following message produced an error:\n\n" + message.content)
-                await ctx.send("**Error**: Ha ocurrido un error al intentar recuperar los eventos.\n " 
-                               "Por favor revisa que los mensajes anclados tengan el formato correcto.\n "
-                               "Si usas **+plantilla** te mandaré un ejemplo de como tienen que estar escritos los eventos.")
-                return False
+    old_events = find_pinned(pinned)
+    if not old_events:
+        await ctx.send("**Error**: Ha ocurrido un error al intentar recuperar los eventos."
+                       "Por favor revisa que los mensajes anclados tengan el formato correcto."
+                       "Si usas **+plantilla** te mandaré un ejemplo de como tienen que estar escritos los eventos.")
+        return False
 
     this_events = [event for event in old_events if simple_cmp(event.event_dict['Id'], idnt)]
     if len(this_events) < 1:
@@ -312,17 +312,12 @@ async def crear(ctx, idnt=None, *args):
 
     pinned = await ctx.pins()
 
-    old_events = []
-    for message in pinned:
-        if TAG in message.content:
-            try:
-                old_events.append(Evento(message))
-            except:
-                print("The following message produced an error:\n\n" + message.content)
-                await ctx.send("**Error**: Ha ocurrido un error al intentar recuperar los eventos.\n " 
-                               "Por favor revisa que los mensajes anclados tengan el formato correcto.\n "
-                               "Si usas **+plantilla** te mandaré un ejemplo de como tienen que estar escritos los eventos.")
-                return False
+    old_events = find_pinned(pinned)
+    if not old_events:
+        await ctx.send("**Error**: Ha ocurrido un error al intentar recuperar los eventos."
+                       "Por favor revisa que los mensajes anclados tengan el formato correcto."
+                       "Si usas **+plantilla** te mandaré un ejemplo de como tienen que estar escritos los eventos.")
+        return False
 
     if new_event in old_events:
         await ctx.send("**Error**: Ya existe la partida **{}**".format(new_event.event_dict['Id']))
@@ -352,18 +347,12 @@ async def anular(ctx, idnt=None, *args):
     author = ctx.message.author
 
     pinned = await ctx.pins()
-
-    old_events = []
-    for message in pinned:
-        if TAG in message.content:
-            try:
-                old_events.append(Evento(message))
-            except:
-                print("The following message produced an error:\n\n" + message.content)
-                await ctx.send("**Error**: Ha ocurrido un error al intentar recuperar los eventos.\n " 
-                               "Por favor revisa que los mensajes anclados tengan el formato correcto.\n "
-                               "Si usas **+plantilla** te mandaré un ejemplo de como tienen que estar escritos los eventos.")
-                return False
+    old_events = find_pinned(pinned)
+    if not old_events:
+        await ctx.send("**Error**: Ha ocurrido un error al intentar recuperar los eventos."
+                       "Por favor revisa que los mensajes anclados tengan el formato correcto."
+                       "Si usas **+plantilla** te mandaré un ejemplo de como tienen que estar escritos los eventos.")
+        return False
 
     this_events = [event for event in old_events if simple_cmp(event.event_dict['Id'], idnt)]
 
@@ -411,17 +400,12 @@ async def modificar(ctx, idnt=None, *args):
 
     pinned = await ctx.pins()
 
-    old_events = []
-    for message in pinned:
-        if TAG in message.content:
-            try:
-                old_events.append(Evento(message))
-            except:
-                print("The following message produced an error:\n\n" + message.content)
-                await ctx.send("**Error**: Ha ocurrido un error al intentar recuperar los eventos.\n " 
-                               "Por favor revisa que los mensajes anclados tengan el formato correcto.\n "
-                               "Si usas **+plantilla** te mandaré un ejemplo de como tienen que estar escritos los eventos.")
-                return False
+    old_events = find_pinned(pinned)
+    if not old_events:
+        await ctx.send("**Error**: Ha ocurrido un error al intentar recuperar los eventos."
+                       "Por favor revisa que los mensajes anclados tengan el formato correcto."
+                       "Si usas **+plantilla** te mandaré un ejemplo de como tienen que estar escritos los eventos.")
+        return False
 
     this_events = [event for event in old_events if simple_cmp(event.event_dict['Id'], idnt)]
 
@@ -451,7 +435,9 @@ async def modificar(ctx, idnt=None, *args):
 
     return True
 
+
 bot.remove_command('help')
+
 
 @bot.command(name='help',
              aliases=['ayuda', '?', 'ayudame'],
@@ -483,13 +469,14 @@ Bienvenido al organizador de partidas de Bukaneros. Soy el panel de ayuda de est
                           "(-f FIN), (-m MAXIMO), (-N NOTAS), )-t TIPO_DE_EVENTO)\n"
                           'Ejemplos: (+crear D&D --nombre La maldicion -d Jueves) o (+crear D&D -n La maldicion -d Jueves -N ¡Venid antes de las 6 para hacer fichas!)',
                     inline=False)
-    embed.add_field(name='+modificar id [-a nueva_id][--id nueva_id] [-n nombre][--nombre nombre] [-d dd/mm][--dia dd/mm]'
-                         '[-i hh:mm][--inicio hh:mm] [-f hh:mm][--fin hh:mm] [-m maximo][--maximo maximo] [-N notas]'
-                         '[--notas notas] [-t tipo][--tipo tipo]',
-                    value="Modifica al menos un campo de tu evento. Usa las etiquetas para cambiar: (-d DIA), (-i INICIO), "
-                          "(-f FIN), (-m MAXIMO), (-N NOTAS), (-t TIPO_DE_EVENTO), (-a NUEVA_ID), (-n NOMBRE)\n"
-                          'Ejemplo: (+modificar D&D -nombre Piratas -a Path)',
-                    inline=False)
+    embed.add_field(
+        name='+modificar id [-a nueva_id][--id nueva_id] [-n nombre][--nombre nombre] [-d dd/mm][--dia dd/mm]'
+             '[-i hh:mm][--inicio hh:mm] [-f hh:mm][--fin hh:mm] [-m maximo][--maximo maximo] [-N notas]'
+             '[--notas notas] [-t tipo][--tipo tipo]',
+        value="Modifica al menos un campo de tu evento. Usa las etiquetas para cambiar: (-d DIA), (-i INICIO), "
+              "(-f FIN), (-m MAXIMO), (-N NOTAS), (-t TIPO_DE_EVENTO), (-a NUEVA_ID), (-n NOMBRE)\n"
+              'Ejemplo: (+modificar D&D -nombre Piratas -a Path)',
+        inline=False)
     embed.add_field(name='+mover id1 id2 [-j jugador][--jugador jugador]',
                     value="Mueve a un jugador (tu mismo si no lo especificas) de la partida con ID1 a la partida con ID2.\n"
                           'Ejemplos: (+mover D&D Pathfinder) o (+mover D&D Pathfinder -j Alberto)',
@@ -527,25 +514,26 @@ async def plantilla(ctx):
         '- Carlos\n'
         '-')
 
+
 @bot.command(name='listar',
              description="Devuelve un listado de partidas en todo el servidor",
              pass_context=True)
 async def listar(ctx):
     event_list = []
     for channel in ctx.guild.text_channels:
-                    
+
         try:
-          pins = await channel.pins()
+            pins = await channel.pins()
         except:
-          continue
-          
-        for message in pins:           
+            continue
+
+        for message in pins:
             if TAG in message.content:
                 try:
                     event_list.append(Evento(message))
                 except:
                     print("The following message produced an error:\n\n" + message.content)
-                    await ctx.send("**Error**: Ha ocurrido un error al intentar recuperar los eventos.\n " 
+                    await ctx.send("**Error**: Ha ocurrido un error al intentar recuperar los eventos.\n "
                                    "Por favor revisa que los mensajes anclados tengan el formato correcto.\n "
                                    "Si usas **+plantilla** te mandaré un ejemplo de como tienen que estar escritos los eventos.")
                     return False
@@ -587,4 +575,4 @@ async def on_message(message):
 
 
 bot.loop.create_task(list_servers())
-bot.run(DEPLOY_TOKEN)
+bot.run(config['DEPLOY_TOKEN'])
