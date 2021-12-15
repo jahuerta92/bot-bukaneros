@@ -460,6 +460,13 @@ class Evento:
             self.event_dict[key] = ARGUMENT_TYPES[key](value)
             return True
         return False
+
+    def update_all(self, dict_values):
+        for key, val in dict_values.items():
+            if val is not None:
+                self.update(key, val)
+        return True
+
 # str_event = '[EventoBukanero] Partida de rol. Id: D&D · Nombre: La Maldición de Strahd · Dia: Miércoles 12/02/2020 · Inicio: 15:30 · Fin: 19:30 · Director: Javi · Maximo: 5 · Notas: Hola caracola \n [Jugadores] \n- John \n - '
 # parsed_event = Evento(str_event)
 

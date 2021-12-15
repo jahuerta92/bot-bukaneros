@@ -37,11 +37,11 @@ def parse(*args, optional_fields, required_fields):
         alias, name = field
         if alias not in arg_names and name not in arg_names:
             if field in req_fields:
-                return False, '**Error**: El argumento **{}** es requerido, pero falta en el comando.'.format(name)
+                return False, f'**Error**: El argumento **{name}** es requerido, pero falta en el comando.'
 
     for item in arg_names:
-        if item not in [item for field in all_fields for item in field]:
-            return False, '**Error**: El argumento **{}** no esta permitido para este comando.'.format(item)
+        if item not in [value for field in all_fields for value in field]:
+            return False, f'**Error**: El argumento **{item}** no esta permitido para este comando.'
 
     parsed_dict = dict()
 
@@ -51,21 +51,21 @@ def parse(*args, optional_fields, required_fields):
         value = None
 
         if arg_alias in args and arg_name in args:
-            return False, '**Error**: Argumentos **{}** y **{}** están repetidos.'.format(arg_alias, arg_name)
+            return False, f'**Error**: Argumentos **{arg_alias}** y **{arg_name}** están repetidos.'
         elif arg_alias in args:
             if args.count(arg_alias) > 1:
-                return False, '**Error**: Argumento **{}** aparece por duplicado.'.format(arg_alias)
+                return False, f'**Error**: Argumento **{arg_alias}** aparece por duplicado.'
             idx = args.index(arg_alias)
         elif arg_name in args:
             if args.count(arg_name) > 1:
-                return False, '**Error**: Argumento **{}** aparece por duplicado.'.format(arg_name)
+                return False, f'**Error**: Argumento **{arg_name}** aparece por duplicado.'
             idx = args.index(arg_name)
 
         if arg_alias in args or arg_name in args:
             if idx >= len(args) - 1:
-                return False, '**Error**: Falta un valor para el argumento {}'.format(args[idx])
+                return False, f'**Error**: Falta un valor para el argumento {args[idx]}'
             elif args[idx + 1][0] == alias_prefix:
-                return False, '**Error**: Falta un valor para el argumento {}'.format(args[idx])
+                return False, f'**Error**: Falta un valor para el argumento {args[idx]}'
 
             value_list = []
             idx += 1
@@ -88,7 +88,10 @@ async def find_pinned(pinned):
             try:
                 old_events.append(Evento(message))
             except:
-                return False, None
+                error_msg = """**Error**: Ha ocurrido un error al intentar recuperar los eventos.
+                Por favor revisa que los mensajes anclados tengan el formato correcto.
+                Si usas **+plantilla** te mandaré un ejemplo de como tienen que estar escritos los eventos."""
+                return False, error_msg
 
     return True, old_events
 
@@ -191,11 +194,9 @@ async def apuntar(ctx, idnt=None, *args):
 
     pinned = await ctx.pins()
 
-    old_events = find_pinned(pinned)
-    if not old_events:
-        await ctx.send("**Error**: Ha ocurrido un error al intentar recuperar los eventos."
-                       "Por favor revisa que los mensajes anclados tengan el formato correcto."
-                       "Si usas **+plantilla** te mandaré un ejemplo de como tienen que estar escritos los eventos.")
+    check, old_events = find_pinned(pinned)
+    if not check:
+        await ctx.send(old_events)
         return False
 
     this_events = [event for event in old_events if simple_cmp(event.event_dict['Id'], idnt)]
@@ -242,11 +243,9 @@ async def quitar(ctx, idnt=None, *args):
         value['Jugadores'] = author.nick if author.nick is not None else author.name
 
     pinned = await ctx.pins()
-    old_events = find_pinned(pinned)
-    if not old_events:
-        await ctx.send("**Error**: Ha ocurrido un error al intentar recuperar los eventos."
-                       "Por favor revisa que los mensajes anclados tengan el formato correcto."
-                       "Si usas **+plantilla** te mandaré un ejemplo de como tienen que estar escritos los eventos.")
+    check, old_events = find_pinned(pinned)
+    if not check:
+        await ctx.send(old_events)
         return False
 
     this_events = [event for event in old_events if simple_cmp(event.event_dict['Id'], idnt)]
@@ -312,11 +311,9 @@ async def crear(ctx, idnt=None, *args):
 
     pinned = await ctx.pins()
 
-    old_events = find_pinned(pinned)
-    if not old_events:
-        await ctx.send("**Error**: Ha ocurrido un error al intentar recuperar los eventos."
-                       "Por favor revisa que los mensajes anclados tengan el formato correcto."
-                       "Si usas **+plantilla** te mandaré un ejemplo de como tienen que estar escritos los eventos.")
+    check, old_events = find_pinned(pinned)
+    if not check:
+        await ctx.send(old_events)
         return False
 
     if new_event in old_events:
@@ -347,11 +344,9 @@ async def anular(ctx, idnt=None, *args):
     author = ctx.message.author
 
     pinned = await ctx.pins()
-    old_events = find_pinned(pinned)
+    check, old_events = find_pinned(pinned)
     if not old_events:
-        await ctx.send("**Error**: Ha ocurrido un error al intentar recuperar los eventos."
-                       "Por favor revisa que los mensajes anclados tengan el formato correcto."
-                       "Si usas **+plantilla** te mandaré un ejemplo de como tienen que estar escritos los eventos.")
+        await ctx.send()
         return False
 
     this_events = [event for event in old_events if simple_cmp(event.event_dict['Id'], idnt)]
@@ -400,11 +395,9 @@ async def modificar(ctx, idnt=None, *args):
 
     pinned = await ctx.pins()
 
-    old_events = find_pinned(pinned)
-    if not old_events:
-        await ctx.send("**Error**: Ha ocurrido un error al intentar recuperar los eventos."
-                       "Por favor revisa que los mensajes anclados tengan el formato correcto."
-                       "Si usas **+plantilla** te mandaré un ejemplo de como tienen que estar escritos los eventos.")
+    check, old_events = find_pinned(pinned)
+    if not check:
+        await ctx.send(old_events)
         return False
 
     this_events = [event for event in old_events if simple_cmp(event.event_dict['Id'], idnt)]
@@ -425,11 +418,7 @@ async def modificar(ctx, idnt=None, *args):
         return False
 
     await this_event.unpin()
-
-    for key, val in value.items():
-        if val is not None:
-            this_event.update(key, val)
-
+    this_event.update_all(value)
     new_message = await ctx.send(this_event)
     await new_message.pin()
 
@@ -548,8 +537,8 @@ async def listar(ctx):
                           color=0xeee657)
 
     for idx, item in enumerate(event_list):
-        idg, date, players = item.summary()
-        embed.add_field(name=date, value='{} · {}'.format(idg, players), inline=False)
+        idg, date_, players = item.summary()
+        embed.add_field(name=date_, value='{} · {}'.format(idg, players), inline=False)
 
     await ctx.message.author.send(embed=embed)
     return True
