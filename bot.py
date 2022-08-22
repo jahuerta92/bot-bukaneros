@@ -12,8 +12,7 @@ BETA_TOKEN = 'NjgwNzA4NzUyNzQ3MjY2MDUy.XlD1eg.kviJenW2IPCYWpJN5j8OScZo4_U'
 DEPLOY_TOKEN = 'NTQwNTA5MDU3MTc0NDcwNjg2.Xkf4_g.fOur5nnRHLhBGUnTh1nfqSgmFGw'  # Get at discordapp.com/developers/applications/me
 TAG = '[EventoBukanero]'
 bot = Bot(command_prefix=BOT_PREFIX,
-          description='Organiza las partidas de rol. Si no conoces los comandos usa ++ayuda',
-          intents=discord.Intents.default())
+          description='Organiza las partidas de rol. Si no conoces los comandos usa ++ayuda')
 
 
 def simple_cmp(a, b):
