@@ -1,5 +1,4 @@
-
-from evento import ARGUMENT_TYPES
+from src.evento import ARGUMENT_TYPES
 import unidecode
 
 def simple_cmp(a, b):

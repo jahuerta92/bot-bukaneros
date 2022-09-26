@@ -18,7 +18,7 @@ TOKEN = config['DEPLOY_TOKEN']
 
 bot = Bot(command_prefix=BOT_PREFIX,
             description='Organiza las partidas de rol. Si no conoces los comandos usa ++ayuda',
-            intents=discord.Intents.default())
+            intents=discord.Intents.all())
 
 
 @bot.command(name='mover',
