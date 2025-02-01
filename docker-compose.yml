@@ -1,0 +1,5 @@
+services:
+  main:
+    build: .
+    container_name: bukabot
+    restart: always
