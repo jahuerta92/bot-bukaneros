@@ -495,23 +495,6 @@ async def listar(ctx):
                                    "Por favor revisa que los mensajes anclados tengan el formato correcto.\n "
                                    "Si usas **+plantilla** te mandaré un ejemplo de como tienen que estar escritos los eventos.")
                     return False
-                
-        # Recursive search for pinned messages intisde channels
-        for thread in channel.threads:
-            try:
-                pins = await thread.pins()
-            except:
-                continue
-            for message in pins:
-                if TAG in message.content:
-                    try:
-                        event_list.append(Evento(message))
-                    except:
-                        print("The following message produced an error:\n\n" + message.content)
-                        await ctx.send("**Error**: Ha ocurrido un error al intentar recuperar los eventos.\n " 
-                                       "Por favor revisa que los mensajes anclados tengan el formato correcto.\n "
-                                       "Si usas **+plantilla** te mandaré un ejemplo de como tienen que estar escritos los eventos.")
-                        return False
 
     if len(event_list) < 1:
         await ctx.send('No hay partidas')
