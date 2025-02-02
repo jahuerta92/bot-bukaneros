@@ -27,7 +27,7 @@ bot = Bot(command_prefix=BOT_PREFIX,
 async def mover(ctx, idnt1, idnt2, *args):
     optional_fields = {'Jugadores'}
     required_fields = set()
-    check, value = parse(*args, optional_fields=optional_fields, required_fields=required_fields)
+    check, value = await parse(*args, optional_fields=optional_fields, required_fields=required_fields)
 
     if not check:
         await ctx.send(value)
@@ -111,7 +111,7 @@ async def mover(ctx, idnt1, idnt2, *args):
 async def apuntar(ctx, idnt=None, *args):
     optional_fields = {'Jugadores'}
     required_fields = set()
-    check, value = parse(*args, optional_fields=optional_fields, required_fields=required_fields)
+    check, value = await parse(*args, optional_fields=optional_fields, required_fields=required_fields)
 
     if not check:
         await ctx.send(value)
@@ -168,7 +168,7 @@ async def apuntar(ctx, idnt=None, *args):
 async def quitar(ctx, idnt=None, *args):
     optional_fields = {'Jugadores'}
     required_fields = set()
-    check, value = parse(*args, optional_fields=optional_fields, required_fields=required_fields)
+    check, value = await parse(*args, optional_fields=optional_fields, required_fields=required_fields)
 
     if not check:
         await ctx.send(value)
@@ -223,7 +223,7 @@ async def quitar(ctx, idnt=None, *args):
 async def crear(ctx, idnt=None, *args):
     optional_fields = {'EventoBukanero', 'Inicio', 'Fin', 'Maximo', 'Dia', 'Notas'}
     required_fields = {'Nombre'}
-    check, value = parse(*args, optional_fields=optional_fields, required_fields=required_fields)
+    check, value = await parse(*args, optional_fields=optional_fields, required_fields=required_fields)
 
     if not check:
         await ctx.send(value)
