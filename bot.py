@@ -514,12 +514,13 @@ async def listar(ctx):
 
 @bot.listen()
 async def on_message(message):
+    await asyncio.sleep(60)
+    
     day = date.today()
     for msg in await message.channel.pins():
         if TAG in msg.content and Evento(msg).event_dict['Dia'].date < day:
             await msg.unpin()
-
-    await asyncio.sleep(60)
+    
     return True
 
 @bot.event
