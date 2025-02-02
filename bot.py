@@ -17,8 +17,8 @@ TAG = '[EventoBukanero]'
 TOKEN = config['DEPLOY_TOKEN']
 
 bot = Bot(command_prefix=BOT_PREFIX,
-            description='Organiza las partidas de rol. Si no conoces los comandos usa ++ayuda',
-            intents=discord.Intents.all())
+          description='Organiza las partidas de rol. Si no conoces los comandos usa ++ayuda',
+          intents=discord.Intents.all())
 
 
 @bot.command(name='mover',
@@ -36,6 +36,7 @@ async def mover(ctx, idnt1, idnt2, *args):
     if idnt1 is None:
         await ctx.send('**Error**: Falta identificador de la primera partida, el primer argumento.')
         return False
+    
     if idnt2 is None:
         await ctx.send('**Error**: Falta identificador de la segunda partida, el segundo argumento.')
         return False
@@ -65,13 +66,16 @@ async def mover(ctx, idnt1, idnt2, *args):
     if len(this_events_1) < 1:
         await ctx.send("**Error**: No existe la partida **{}** \n".format(idnt1))
         return False
+    
     elif len(this_events_1) > 1:
         await ctx.send(
             "**Error**: Hay múltiples partidas de **{}**, por favor revisa los mensajes anclados. \n".format(idnt1))
         return False
+    
     if len(this_events_2) < 1:
         await ctx.send("**Error**: No existe la partida **{}** \n".format(idnt2))
         return False
+    
     elif len(this_events_2) > 1:
         await ctx.send(
             "**Error**: Hay múltiples partidas de **{}**, por favor revisa los mensajes anclados. \n".format(idnt2))
@@ -476,7 +480,6 @@ async def plantilla(ctx):
 async def listar(ctx):
     event_list = []
     for channel in ctx.guild.text_channels:
-                    
         try:
           pins = await channel.pins()
         except:
@@ -492,6 +495,23 @@ async def listar(ctx):
                                    "Por favor revisa que los mensajes anclados tengan el formato correcto.\n "
                                    "Si usas **+plantilla** te mandaré un ejemplo de como tienen que estar escritos los eventos.")
                     return False
+                
+        # Recursive search for pinned messages intisde channels
+        for thread in channel.threads:
+            try:
+                pins = await thread.pins()
+            except:
+                continue
+            for message in pins:
+                if TAG in message.content:
+                    try:
+                        event_list.append(Evento(message))
+                    except:
+                        print("The following message produced an error:\n\n" + message.content)
+                        await ctx.send("**Error**: Ha ocurrido un error al intentar recuperar los eventos.\n " 
+                                       "Por favor revisa que los mensajes anclados tengan el formato correcto.\n "
+                                       "Si usas **+plantilla** te mandaré un ejemplo de como tienen que estar escritos los eventos.")
+                        return False
 
     if len(event_list) < 1:
         ctx.send('No hay partidas')
@@ -516,6 +536,19 @@ async def on_message(message):
         if TAG in msg.content and Evento(msg).event_dict['Dia'].date < day:
             await msg.unpin()
 
+    await asyncio.sleep(60)
     return True
+
+@bot.event
+async def on_error(event, *args, **kwargs):
+    if isinstance(args[0], discord.HTTPException) and args[0].status == 429:
+        retry_after = args[0].headers.get("Retry-After")
+        if retry_after:
+            await asyncio.sleep(int(retry_after) + 1) 
+        else:
+            await asyncio.sleep(5)  
+    else:
+        print(f"An error occurred: {args[0]}")
+
 
 bot.run(TOKEN)
