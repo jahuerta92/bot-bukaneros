@@ -514,7 +514,7 @@ async def listar(ctx):
                         return False
 
     if len(event_list) < 1:
-        ctx.send('No hay partidas')
+        await ctx.send('No hay partidas')
         return False
 
     event_list.sort(key=lambda x: x.event_dict['Dia'].date)
