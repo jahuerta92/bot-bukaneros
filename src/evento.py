@@ -4,6 +4,7 @@ from copy import copy
 
 import unidecode
 import re
+import asyncio
 
 Argumento = namedtuple('Argumento', 'alias name default finder dtype')
 
@@ -368,7 +369,7 @@ class Evento:
                           str_otros,
                           str_jugadores)
 
-    def parse(self, raw_string):
+    async def parse(self, raw_string):
         """Función para transformar un string a Evento, hace uso de ARGUMENT_TYPES y sus objetos
         tipo Campo.
 
@@ -397,7 +398,7 @@ class Evento:
 
         return parsed_dict
 
-    def new_player(self, player):
+    async def new_player(self, player):
         """Añade un jugador al evento si no ha sido añadido ya y si la partida aun tiene huecos.
 
         Parameters
@@ -423,7 +424,7 @@ class Evento:
             self.event_dict['Jugadores'].append(player)
             return True, None
 
-    def remove_player(self, player):
+    async def remove_player(self, player):
         """Retira a un jugador de la partida
 
         Parameters
@@ -448,15 +449,15 @@ class Evento:
             self.event_dict['Jugadores'].remove(self.event_dict['Jugadores'][idx])
             return True, None
 
-    def summary(self):
+    async def summary(self):
         jugadores = len(self.event_dict['Jugadores'])
         return self.event_dict['Id'], str(self.event_dict['Dia']), 'Huecos: {}/{}'.format(jugadores,
                                                                                           self.event_dict['Maximo'])
 
-    def unpin(self):
-        return self.original_msg.unpin()
+    async def unpin(self):
+        return await self.original_msg.unpin()
 
-    def update(self, key, value):
+    async def update(self, key, value):
         if key in self.event_dict.keys():
             self.event_dict[key] = ARGUMENT_TYPES[key](value)
             return True

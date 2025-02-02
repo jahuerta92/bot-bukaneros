@@ -1,13 +1,14 @@
 from src.evento import ARGUMENT_TYPES
 import unidecode
+import asyncio
 
-def simple_cmp(a, b):
+async def simple_cmp(a, b):
     a_sub = unidecode.unidecode(a).lower()
     b_sub = unidecode.unidecode(b).lower()
     return a_sub == b_sub
 
 
-def parse(*args, optional_fields, required_fields):
+async def parse(*args, optional_fields, required_fields):
     opt_fields = [('-' + ARGUMENT_TYPES[k].alias, '--' + ARGUMENT_TYPES[k].name) for k in optional_fields]
     req_fields = [('-' + ARGUMENT_TYPES[k].alias, '--' + ARGUMENT_TYPES[k].name) for k in required_fields]
 
