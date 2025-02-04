@@ -17,7 +17,7 @@ config = dotenv_values(".env")
 
 BOT_PREFIX = "+"
 TAG = '[EventoBukanero]'
-TOKEN = config['BETA_TOKEN']
+TOKEN = config['DEPLOY_TOKEN']
 
 bot = Bot(command_prefix=BOT_PREFIX,
           description='Organiza las partidas de rol. Si no conoces los comandos usa ++ayuda',
