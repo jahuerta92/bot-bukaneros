@@ -1,6 +1,9 @@
 import asyncio
 import discord
 import unidecode
+import yaml
+
+import pandas as pd
 
 from dotenv import dotenv_values
 
@@ -14,12 +17,18 @@ config = dotenv_values(".env")
 
 BOT_PREFIX = "+"
 TAG = '[EventoBukanero]'
-TOKEN = config['DEPLOY_TOKEN']
+TOKEN = config['BETA_TOKEN']
 
 bot = Bot(command_prefix=BOT_PREFIX,
           description='Organiza las partidas de rol. Si no conoces los comandos usa ++ayuda',
           intents=discord.Intents.all())
 
+
+async def check_error(cond, message):
+    if cond:
+        await message.channel.send(message)
+        return False
+    return True
 
 @bot.command(name='mover',
             description='Mueve a un jugador de una partida a otra',
@@ -29,17 +38,9 @@ async def mover(ctx, idnt1, idnt2, *args):
     required_fields = set()
     check, value = parse(*args, optional_fields=optional_fields, required_fields=required_fields)
 
-    if not check:
-        await ctx.send(value)
-        return False
-
-    if idnt1 is None:
-        await ctx.send('**Error**: Falta identificador de la primera partida, el primer argumento.')
-        return False
-    
-    if idnt2 is None:
-        await ctx.send('**Error**: Falta identificador de la segunda partida, el segundo argumento.')
-        return False
+    assert await check_error(not check, value)
+    assert await check_error(idnt1 is None, 'Falta identificador de la primera partida, el primer argumento.')
+    assert await check_error(idnt2 is None, 'Falta identificador de la segunda partida, el segundo argumento.')
 
     author = ctx.message.author
 
@@ -63,35 +64,19 @@ async def mover(ctx, idnt1, idnt2, *args):
     this_events_1 = [event for event in old_events if simple_cmp(event.event_dict['Id'], idnt1)]
     this_events_2 = [event for event in old_events if simple_cmp(event.event_dict['Id'], idnt2)]
 
-    if len(this_events_1) < 1:
-        await ctx.send("**Error**: No existe la partida **{}** \n".format(idnt1))
-        return False
-    
-    elif len(this_events_1) > 1:
-        await ctx.send(
-            "**Error**: Hay múltiples partidas de **{}**, por favor revisa los mensajes anclados. \n".format(idnt1))
-        return False
-    
-    if len(this_events_2) < 1:
-        await ctx.send("**Error**: No existe la partida **{}** \n".format(idnt2))
-        return False
-    
-    elif len(this_events_2) > 1:
-        await ctx.send(
-            "**Error**: Hay múltiples partidas de **{}**, por favor revisa los mensajes anclados. \n".format(idnt2))
-        return False
+    assert await check_error(len(this_events_1) < 1, f'No existe la partida **{idnt1}**')
+    assert await check_error(len(this_events_1) > 1, f'Hay múltiples partidas de **{idnt1}**, por favor revisa los mensajes anclados.')
+    assert await check_error(len(this_events_2) < 1, f'No existe la partida **{idnt2}**')
+    assert await check_error(len(this_events_2) > 1, f'Hay múltiples partidas de **{idnt2}**, por favor revisa los mensajes anclados.')
 
     this_event_1 = this_events_1[0]
     this_event_2 = this_events_2[0]
 
     check, fail = this_event_1.remove_player(value['Jugadores'])
-    if not check:
-        await ctx.send(fail.format(value['Jugadores'], idnt1))
-        return False
+    assert await check_error(not check, fail.format(value['Jugadores'], idnt1))
+    
     check, fail = this_event_2.new_player(value['Jugadores'])
-    if not check:
-        await ctx.send(fail.format(value['Jugadores'], idnt2))
-        return False
+    assert await check_error(not check, fail.format(value['Jugadores'], idnt2))
 
     new_message_1 = await ctx.send(str(this_event_1))
     new_message_2 = await ctx.send(str(this_event_2))
@@ -113,13 +98,8 @@ async def apuntar(ctx, idnt=None, *args):
     required_fields = set()
     check, value = parse(*args, optional_fields=optional_fields, required_fields=required_fields)
 
-    if not check:
-        await ctx.send(value)
-        return False
-
-    if idnt is None:
-        await ctx.send('**Error**: Falta identificador de la partida, el primer argumento.')
-        return False
+    assert await check_error(not check, value)
+    assert await check_error(idnt is None, 'Falta identificador de la partida, el primer argumento.')
 
     author = ctx.message.author
 
@@ -141,13 +121,9 @@ async def apuntar(ctx, idnt=None, *args):
                 return False
 
     this_events = [event for event in old_events if simple_cmp(event.event_dict['Id'], idnt)]
-    if len(this_events) < 1:
-        await ctx.send("**Error**: No existe la partida **{}** \n".format(idnt))
-        return False
-    elif len(this_events) > 1:
-        await ctx.send(
-            "**Error**: Hay múltiples partidas de **{}**, por favor revisa los mensajes anclados. \n".format(idnt))
-        return False
+    
+    assert await check_error(len(this_events) < 1, f'No existe la partida **{idnt}**')
+    assert await check_error(len(this_events) > 1, f'Hay múltiples partidas de **{idnt}**, por favor revisa los mensajes anclados.')
 
     this_event = this_events[0]
     check, fail = this_event.new_player(value['Jugadores'])
@@ -170,13 +146,8 @@ async def quitar(ctx, idnt=None, *args):
     required_fields = set()
     check, value = parse(*args, optional_fields=optional_fields, required_fields=required_fields)
 
-    if not check:
-        await ctx.send(value)
-        return False
-
-    if idnt is None:
-        await ctx.send('**Error**: Falta identificador de la partida, el primer argumento.')
-        return False
+    assert await check_error(not check, value)
+    assert await check_error(idnt is None, 'Falta identificador de la partida, el primer argumento.')
 
     author = ctx.message.author
 
@@ -197,13 +168,9 @@ async def quitar(ctx, idnt=None, *args):
                 return False
 
     this_events = [event for event in old_events if simple_cmp(event.event_dict['Id'], idnt)]
-    if len(this_events) < 1:
-        await ctx.send("**Error**: No existe la partida **{}** \n".format(idnt))
-        return False
-    elif len(this_events) > 1:
-        await ctx.send(
-            "**Error**: Hay múltiples partidas de **{}**, por favor revisa los mensajes anclados. \n".format(idnt))
-        return False
+    
+    assert await check_error(len(this_events) < 1, f'No existe la partida **{idnt}**')
+    assert await check_error(len(this_events) > 1, f'Hay múltiples partidas de **{idnt}**, por favor revisa los mensajes anclados.')
 
     this_event = this_events[0]
     check, fail = this_event.remove_player(value['Jugadores'])
@@ -225,13 +192,8 @@ async def crear(ctx, idnt=None, *args):
     required_fields = {'Nombre'}
     check, value = parse(*args, optional_fields=optional_fields, required_fields=required_fields)
 
-    if not check:
-        await ctx.send(value)
-        return False
-
-    if idnt is None:
-        await ctx.send('**Error**: Falta identificador de la partida, el primer argumento.')
-        return False
+    assert await check_error(not check, value)
+    assert await check_error(idnt is None, 'Falta identificador de la partida, el primer argumento.')
 
     value['Id'] = idnt
 
@@ -239,16 +201,10 @@ async def crear(ctx, idnt=None, *args):
 
     if value['Dia'] is None:
         tmp = channel.name.split('-')
-        if len(tmp) < 2:
-            await ctx.send(
-                '**Error**: El dia no se puede establecer automaticamente en este canal. '
-                'Prueba a especificarlo con -d o --dia.')
-            return False
-        elif tmp[1] not in LEGAL_DAYS_SET:
-            await ctx.send(
-                '**Error**: El dia no se puede establecer automaticamente en este canal. '
-                'Prueba a especificarlo con -d o --dia.')
-            return False
+        
+        assert await check_error(len(tmp) < 2, '**Error**: El dia no se puede establecer automaticamente en este canal.')
+        assert await check_error(tmp[1] not in LEGAL_DAYS_SET, '**Error**: El dia no se puede establecer automaticamente en este canal.')
+                  
         value['Dia'] = Dia(tmp[1])
 
     author = ctx.message.author
@@ -271,9 +227,8 @@ async def crear(ctx, idnt=None, *args):
                                "Si usas **+plantilla** te mandaré un ejemplo de como tienen que estar escritos los eventos.")
                 return False
 
-    if new_event in old_events:
-        await ctx.send("**Error**: Ya existe la partida **{}**".format(new_event.event_dict['Id']))
-        return False
+    evid = new_event.event_dict["Id"]
+    assert await check_error(new_event in old_events, f'Ya existe la partida **{evid}**')
 
     new_message = await ctx.send(new_event)
     await new_message.pin()
@@ -288,14 +243,9 @@ async def anular(ctx, idnt=None, *args):
     required_fields = set()
     check, value = parse(*args, optional_fields=optional_fields, required_fields=required_fields)
 
-    if not check:
-        await ctx.send(value)
-        return False
-
-    if idnt is None:
-        await ctx.send('**Error**: Falta identificador de la partida, el primer argumento.')
-        return
-
+    assert await check_error(not check, value)
+    assert await check_error(idnt is None, 'Falta identificador de la partida, el primer argumento.')
+    
     author = ctx.message.author
 
     pinned = await ctx.pins()
@@ -314,20 +264,14 @@ async def anular(ctx, idnt=None, *args):
 
     this_events = [event for event in old_events if simple_cmp(event.event_dict['Id'], idnt)]
 
-    if len(this_events) < 1:
-        await ctx.send("**Error**: No existe la partida **{}** \n".format(idnt))
-        return False
-    elif len(this_events) > 1:
-        await ctx.send(
-            "**Error**: Hay múltiples partidas de **{}**, por favor revisa los mensajes anclados. \n".format(idnt))
-        return False
-
+    assert await check_error(len(this_events) < 1, f'No existe la partida **{idnt}**')
+    assert await check_error(len(this_events) > 1, f'Hay múltiples partidas de **{idnt}**, por favor revisa los mensajes anclados.')
+    
     nick = author.nick if author.nick is not None else author.name
 
     this_event = this_events[0]
-    if nick != this_event.event_dict['Director']:
-        await ctx.send("**Error**: No puedes anular una partida que no diriges")
-        return False
+    
+    assert await check_error(nick != this_event.event_dict['Director'], 'No puedes anular una partida que no diriges')
 
     await ctx.send("Anulada partida " + idnt)
     await this_event.unpin()
@@ -342,17 +286,9 @@ async def modificar(ctx, idnt=None, *args):
     required_fields = set()
     check, value = parse(*args, optional_fields=optional_fields, required_fields=required_fields)
 
-    if not check:
-        await ctx.send(value)
-        return False
-
-    if idnt is None:
-        await ctx.send('**Error**: Falta identificador de la partida, el primer argumento.')
-        return False
-
-    if len(args) < 1:
-        await ctx.send('**Error**: No se ha indicado nada que modificar.')
-        return False
+    assert await check_error(not check, value)
+    assert await check_error(idnt is None, 'Falta identificador de la partida, el primer argumento.')
+    assert await check_error(len(args) < 1, 'No se ha indicado nada que modificar.')
 
     author = ctx.message.author
 
@@ -372,20 +308,14 @@ async def modificar(ctx, idnt=None, *args):
 
     this_events = [event for event in old_events if simple_cmp(event.event_dict['Id'], idnt)]
 
-    if len(this_events) < 1:
-        await ctx.send("**Error**: No existe la partida **{}** \n".format(idnt))
-        return False
-    elif len(this_events) > 1:
-        await ctx.send(
-            "**Error**: Hay múltiples partidas de **{}**, por favor revisa los mensajes anclados. \n".format(idnt))
-        return False
+    assert await check_error(len(this_events) < 1, f'No existe la partida **{idnt}**')
+    assert await check_error(len(this_events) > 1, f'Hay múltiples partidas de **{idnt}**, por favor revisa los mensajes anclados.')
 
     nick = author.nick if author.nick is not None else author.name
 
     this_event = this_events[0]
-    if nick != this_event.event_dict['Director']:
-        await ctx.send("**Error**: No puedes modificar una partida que no diriges")
-        return False
+    
+    assert await check_error(nick != this_event.event_dict['Director'], 'No puedes modificar una partida que no diriges')
 
     await this_event.unpin()
 
@@ -404,55 +334,40 @@ bot.remove_command('help')
              aliases=['ayuda', '?', 'ayudame'],
              pass_ctx=True)
 async def help(ctx):
-    embed = discord.Embed(title="Botkanero", description='''
-Bienvenido al organizador de partidas de Bukaneros. Soy el panel de ayuda de este bot. Las indicaciones entre corchetes son opcionales, se rellenan automaticamente siempre que pueden.''',
+    with open('strings.yaml', 'r') as stream:
+        help_dict = yaml.safe_load(stream)
+        
+    embed = discord.Embed(title="Botkanero", description= help_dict['intro'],
                           color=0xeee657)
     embed.add_field(name='Primeros pasos',
-                    value='Si eres un jugador, para apuntarte a una partida solo tienes que utilizar (+apuntar ID),'
-                          'donde la ID es el identificador de la partida, etiquetado siempre en el mensaje anclado. \n'
-                          'Si eres director tendrás que usar (+crear ID -n NOMBRE) donde ID es el identificador que'
-                          'le darás a tu partida y el NOMBRE que quieres que tenga. Si no publicas en un grupo habitual'
-                          'tendras que especificar el dia con -d DIA, diociendole que es jueves, o un dia concreto con'
-                          ' dd/mm.',
+                    value=help_dict['primeros_pasos'],
                     inline=False)
-    embed.add_field(name='+apuntar id [-j jugador][--jugador jugador]',
-                    value="Para apuntarte a la partida con ID, puedes apuntar a otra persona si incluyes -j o --jugador.\n"
-                          "Ejemplos: (+apuntar D&D -j Alberto) o (+apuntar D&D)",
+    embed.add_field(name=help_dict['apuntar']['cmd'],
+                    value=help_dict['apuntar']['txt'],
                     inline=False)
-    embed.add_field(name='+quitar id [-j jugador][--jugador jugador]',
-                    value="Para salirte de la partida con ID, puedes apuntar a otra persona si incluyes -j o --jugador.\n"
-                          "Ejemplos: (+quitar D&D -j Alberto) o (+quitar D&D)",
+    embed.add_field(name=help_dict['quitar']['cmd'],
+                    value=help_dict['quitar']['txt'],
                     inline=False)
-    embed.add_field(name='+crear id --nombre nombre de la partida [-d dd/mm][--dia dd/mm] [-i hh:mm][--inicio hh:mm]'
-                         '[-f hh:mm][--fin hh:mm] [-m maximo][--maximo maximo] [-N notas][--notas notas] [-t tipo][--tipo tipo]',
-                    value="Crea una partida con una id y un nombre. Si tu partida está fuera de los canales diarios indica el dia con -d. \n"
-                          "¡El resto de argumentos son opcionales! Sirven para especificar aspectos de la partida: (-d DIA), (-i INICIO), "
-                          "(-f FIN), (-m MAXIMO), (-N NOTAS), )-t TIPO_DE_EVENTO)\n"
-                          'Ejemplos: (+crear D&D --nombre La maldicion -d Jueves) o (+crear D&D -n La maldicion -d Jueves -N ¡Venid antes de las 6 para hacer fichas!)',
+    embed.add_field(name=help_dict['crear']['cmd'],
+                    value=help_dict['crear']['txt'],
                     inline=False)
-    embed.add_field(name='+modificar id [-a nueva_id][--id nueva_id] [-n nombre][--nombre nombre] [-d dd/mm][--dia dd/mm]'
-                         '[-i hh:mm][--inicio hh:mm] [-f hh:mm][--fin hh:mm] [-m maximo][--maximo maximo] [-N notas]'
-                         '[--notas notas] [-t tipo][--tipo tipo]',
-                    value="Modifica al menos un campo de tu evento. Usa las etiquetas para cambiar: (-d DIA), (-i INICIO), "
-                          "(-f FIN), (-m MAXIMO), (-N NOTAS), (-t TIPO_DE_EVENTO), (-a NUEVA_ID), (-n NOMBRE)\n"
-                          'Ejemplo: (+modificar D&D -nombre Piratas -a Path)',
+    embed.add_field(name=help_dict['modificar']['cmd'],
+                    value=help_dict['modificar']['txt'],
                     inline=False)
-    embed.add_field(name='+mover id1 id2 [-j jugador][--jugador jugador]',
-                    value="Mueve a un jugador (tu mismo si no lo especificas) de la partida con ID1 a la partida con ID2.\n"
-                          'Ejemplos: (+mover D&D Pathfinder) o (+mover D&D Pathfinder -j Alberto)',
+    embed.add_field(name=help_dict['mover']['cmd'],
+                    value=help_dict['mover']['txt'],
                     inline=False)
-    embed.add_field(name='+anular id',
-                    value="Anula una partida que tu dirijas."
-                          "Ejemplo: [+anular D&D]"
-                    , inline=False)
-    embed.add_field(name='+listar',
-                    value="Lista todas las partidas disponibles del servidor",
+    embed.add_field(name=help_dict['anular']['cmd'],
+                    value=help_dict['anular']['txt'],
                     inline=False)
-    embed.add_field(name='+ejemplo',
-                    value="Muestra un ejemplo del formato de la partida, para copiar y pegar",
+    embed.add_field(name=help_dict['listar']['cmd'],
+                    value=help_dict['listar']['txt'],
                     inline=False)
-    embed.add_field(name='+ayuda',
-                    value="Es lo que estas leyendo, grumete",
+    embed.add_field(name=help_dict['ejemplo']['cmd'],
+                    value=help_dict['ejemplo']['txt'],
+                    inline=False)
+    embed.add_field(name=help_dict['ayuda']['cmd'],
+                    value=help_dict['ayuda']['txt'],
                     inline=False)
 
     await ctx.message.author.send(embed=embed)
@@ -465,26 +380,37 @@ async def plantilla(ctx):
     await ctx.message.author.send(
         'Este es un ejemplo del formato de la partida. Copia y pega el contenido del mensaje para'
         'que sea compatible con el bot.\n\n'
-        '[EventoBukanero] Partida de rol. Id: D&D · Nombre: La Maldición de Strahd ·'
+        '```[EventoBukanero] Partida de rol. Id: D&D · Nombre: La Maldición de Strahd ·'
         ' Dia: Miércoles 12/02/2020 · Inicio: 15:30 · Fin: 19:30 · Director: Javi ·'
         ' Maximo: 5 · Notas: Hola caracola \n'
         '[Jugadores]\n'
         '- Abel\n'
         '- Bea\n'
         '- Carlos\n'
-        '-')
+        '-```')
 
 @bot.command(name='listar',
              description="Devuelve un listado de partidas en todo el servidor",
              pass_context=True)
 async def listar(ctx):
     event_list = []
-    for channel in ctx.guild.text_channels:
-        try:
-          pins = await channel.pins()
-        except:
-          continue
-          
+    
+    
+    to_check = []
+    # Retrieve all channels and threads, exhaustive search
+    for channel in ctx.guild.channels:
+        if channel.type == discord.ChannelType.text:
+            to_check.append(channel)
+            for thread in channel.threads:
+                to_check.append(thread)
+        elif channel.type == discord.ChannelType.forum:
+            for thread in channel.threads:
+                to_check.append(thread)
+    
+    
+    # Retrieve all pinned messages in the channels
+    for channel in to_check:
+        pins = await channel.pins()
         for message in pins:           
             if TAG in message.content:
                 try:
@@ -496,20 +422,21 @@ async def listar(ctx):
                                    "Si usas **+plantilla** te mandaré un ejemplo de como tienen que estar escritos los eventos.")
                     return False
 
-    if len(event_list) < 1:
-        await ctx.send('No hay partidas')
-        return False
+    assert await check_error(len(event_list) < 1, 'No hay partidas')
 
     event_list.sort(key=lambda x: x.event_dict['Dia'].date)
+    games = pd.DataFrame([event.event_dict for event in event_list]).set_index('Dia')
+    games['Jugadores'] = games['Jugadores'].apply(lambda x: len(x))
+    games['Jugadores'] = games[['Jugadores', 'Maximo']].apply(lambda x: f'{x[0]}/{x[1]}', axis=1)
+    games.drop(columns=['EventoBukanero', 'Id', 'Maximo'], inplace=True)
+    
+    message = f'''# Tablero de partidas
+```
+{games.to_markdown()}
+```
+'''    
 
-    embed = discord.Embed(title="Tablero de partidas",
-                          color=0xeee657)
-
-    for idx, item in enumerate(event_list):
-        idg, date, players = item.summary()
-        embed.add_field(name=date, value='{} · {}'.format(idg, players), inline=False)
-
-    await ctx.message.author.send(embed=embed)
+    await ctx.message.author.send(message)
     return True
 
 @bot.listen()
