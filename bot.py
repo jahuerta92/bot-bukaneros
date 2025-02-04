@@ -432,7 +432,7 @@ async def listar(ctx):
     games = pd.DataFrame([event.event_dict for event in event_list]).set_index('Dia')
     games['Jugadores'] = games['Jugadores'].apply(lambda x: len(x))
     games['Jugadores'] = games[['Jugadores', 'Maximo']].apply(lambda x: f'{x[0]}/{x[1]}', axis=1)
-    games.drop(columns=['EventoBukanero', 'Id', 'Maximo'], inplace=True)
+    games.drop(columns=['EventoBukanero', 'Id', 'Maximo', 'Notas'], inplace=True)
     
     message = f'''# Tablero de partidas
 ```

@@ -69,7 +69,7 @@ listar:
     Listado `+listar`
 
   txt: |
-    Lista todas las partidas disponibles del servidor
+    Lista todas las partidas disponibles del servidor. (Cuidado, puede tardar unos minutos)
   
 ejemplo:
   cmd: |
