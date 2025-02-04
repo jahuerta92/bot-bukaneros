@@ -5,3 +5,4 @@
 devbook.ipynb
 .env
 *.pyc
+*.ipynb
