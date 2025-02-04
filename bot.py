@@ -410,7 +410,11 @@ async def listar(ctx):
     
     # Retrieve all pinned messages in the channels
     for channel in to_check:
-        pins = await channel.pins()
+        try:
+            pins = await channel.pins()
+        except:
+            continue
+        
         for message in pins:           
             if TAG in message.content:
                 try:
