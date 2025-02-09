@@ -1,6 +1,7 @@
 /env
 /.idea
 /legacy
+/data
 
 devbook.ipynb
 .env

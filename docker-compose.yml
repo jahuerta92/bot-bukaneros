@@ -1,5 +1,24 @@
 services:
-  main:
+  bot:
     build: .
     container_name: bukabot
     restart: always
+    depends_on:
+      - database
+    networks:
+      - bukanet
+
+  database:
+    image: mongo:8.0.4
+    container_name: bukadb
+    restart: always
+    volumes:
+      - ./data:/data/db
+    ports:
+      - "27017:27017"
+    networks:
+      - bukanet
+
+networks:
+  bukanet:
+    driver: bridge

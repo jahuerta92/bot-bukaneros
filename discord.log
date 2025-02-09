@@ -1,0 +1,108 @@
+[2025-02-09 16:33:07] [INFO    ] discord.client: logging in using static token
+[2025-02-09 16:33:08] [INFO    ] discord.gateway: Shard ID None has connected to Gateway (Session ID: bcad61128937c48cd1b49e3b66e24cc4).
+[2025-02-09 16:35:09] [ERROR   ] discord.app_commands.tree: Ignoring exception in command 'listar'
+Traceback (most recent call last):
+  File "C:\Users\PC\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.10_qbz5n2kfra8p0\LocalCache\local-packages\Python310\site-packages\discord\app_commands\commands.py", line 850, in _do_call
+    return await self._callback(self.binding, interaction, **params)  # type: ignore
+  File "F:\Proyectos\BotBukanerosV2\bot-bukaneros\cogs\eventos.py", line 599, in listar
+    assert await self._manage_check(interaction, len(retrieved_events) < 1, 'No hay partidas')
+AssertionError
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Users\PC\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.10_qbz5n2kfra8p0\LocalCache\local-packages\Python310\site-packages\discord\app_commands\tree.py", line 1240, in _call
+    await command._invoke_with_namespace(interaction, namespace)
+  File "C:\Users\PC\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.10_qbz5n2kfra8p0\LocalCache\local-packages\Python310\site-packages\discord\app_commands\commands.py", line 876, in _invoke_with_namespace
+    return await self._do_call(interaction, transformed_values)
+  File "C:\Users\PC\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.10_qbz5n2kfra8p0\LocalCache\local-packages\Python310\site-packages\discord\app_commands\commands.py", line 869, in _do_call
+    raise CommandInvokeError(self, e) from e
+discord.app_commands.errors.CommandInvokeError: Command 'listar' raised an exception: AssertionError: 
+[2025-02-09 16:45:06] [ERROR   ] discord.app_commands.tree: Ignoring exception in command 'listar'
+Traceback (most recent call last):
+  File "C:\Users\PC\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.10_qbz5n2kfra8p0\LocalCache\local-packages\Python310\site-packages\discord\app_commands\commands.py", line 850, in _do_call
+    return await self._callback(self.binding, interaction, **params)  # type: ignore
+  File "F:\Proyectos\BotBukanerosV2\bot-bukaneros\cogs\eventos.py", line 601, in listar
+    retrieved_events.sort(key=lambda event, _: event.dia.date)
+TypeError: Events.listar.<locals>.<lambda>() missing 1 required positional argument: '_'
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Users\PC\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.10_qbz5n2kfra8p0\LocalCache\local-packages\Python310\site-packages\discord\app_commands\tree.py", line 1240, in _call
+    await command._invoke_with_namespace(interaction, namespace)
+  File "C:\Users\PC\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.10_qbz5n2kfra8p0\LocalCache\local-packages\Python310\site-packages\discord\app_commands\commands.py", line 876, in _invoke_with_namespace
+    return await self._do_call(interaction, transformed_values)
+  File "C:\Users\PC\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.10_qbz5n2kfra8p0\LocalCache\local-packages\Python310\site-packages\discord\app_commands\commands.py", line 865, in _do_call
+    raise CommandInvokeError(self, e) from e
+discord.app_commands.errors.CommandInvokeError: Command 'listar' raised an exception: TypeError: Events.listar.<locals>.<lambda>() missing 1 required positional argument: '_'
+[2025-02-09 16:49:16] [ERROR   ] discord.app_commands.tree: Ignoring exception in command 'listar'
+Traceback (most recent call last):
+  File "C:\Users\PC\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.10_qbz5n2kfra8p0\LocalCache\local-packages\Python310\site-packages\discord\app_commands\commands.py", line 850, in _do_call
+    return await self._callback(self.binding, interaction, **params)  # type: ignore
+  File "F:\Proyectos\BotBukanerosV2\bot-bukaneros\cogs\eventos.py", line 601, in listar
+    games = pd.DataFrame([event.to_dict() for event, _ in retrieved_events])
+  File "F:\Proyectos\BotBukanerosV2\bot-bukaneros\cogs\eventos.py", line 601, in <listcomp>
+    games = pd.DataFrame([event.to_dict() for event, _ in retrieved_events])
+AttributeError: 'tuple' object has no attribute 'to_dict'
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Users\PC\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.10_qbz5n2kfra8p0\LocalCache\local-packages\Python310\site-packages\discord\app_commands\tree.py", line 1240, in _call
+    await command._invoke_with_namespace(interaction, namespace)
+  File "C:\Users\PC\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.10_qbz5n2kfra8p0\LocalCache\local-packages\Python310\site-packages\discord\app_commands\commands.py", line 876, in _invoke_with_namespace
+    return await self._do_call(interaction, transformed_values)
+  File "C:\Users\PC\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.10_qbz5n2kfra8p0\LocalCache\local-packages\Python310\site-packages\discord\app_commands\commands.py", line 869, in _do_call
+    raise CommandInvokeError(self, e) from e
+discord.app_commands.errors.CommandInvokeError: Command 'listar' raised an exception: AttributeError: 'tuple' object has no attribute 'to_dict'
+[2025-02-09 16:53:22] [ERROR   ] discord.app_commands.tree: Ignoring exception in command 'listar'
+Traceback (most recent call last):
+  File "C:\Users\PC\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.10_qbz5n2kfra8p0\LocalCache\local-packages\Python310\site-packages\discord\app_commands\commands.py", line 850, in _do_call
+    return await self._callback(self.binding, interaction, **params)  # type: ignore
+  File "F:\Proyectos\BotBukanerosV2\bot-bukaneros\cogs\eventos.py", line 608, in listar
+    file_games = discord.File(output.getvalue(), filename='partidas.csv')
+  File "C:\Users\PC\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.10_qbz5n2kfra8p0\LocalCache\local-packages\Python310\site-packages\discord\file.py", line 97, in __init__
+    self.fp = open(fp, 'rb')
+OSError: [Errno 22] Invalid argument: b'Dia,Tipo,Id,Nombre,Inicio,Fin,Director,Jugadores,Notas\r\nLunes 10/2/2025,Partida de rol,Warhammer,Warhammer: Noches de Bohemia y de Ilusi\xc3\xb3n,17:00,21:00,javihu,0/5 | ,No subis de nivel\r\nLunes 10/2/2025,Partida de rol,Strahd,La maldicion de Strahd: El retorno,00:00,00:00,javihu,0/5 | ,-\r\nLunes 10/2/2025,Partida de rol,Warhammer,Warhammer: Noches de Bohemia y de Ilusi\xc3\xb3n,17:00,21:00,javihu,0/5 | ,No subis de nivel\r\nLunes 10/2/2025,Partida de rol,Strahd,La maldicion de Strahd: El retorno,00:00,00:00,javihu,0/5 | ,-\r\nLunes 10/2/2025,Partida de rol,Warhammer,Warhammer: Noches de Bohemia y de Ilusi\xc3\xb3n,17:00,21:00,javihu,0/5 | ,No subis de nivel\r\nLunes 10/2/2025,Partida de rol,Strahd,La maldicion de Strahd: El retorno,00:00,00:00,javihu,0/5 | ,-\r\nLunes 10/2/2025,Partida de rol,Warhammer,Warhammer: Noches de Bohemia y de Ilusi\xc3\xb3n,17:00,21:00,javihu,0/5 | ,No subis de nivel\r\nLunes 10/2/2025,Partida de rol,Strahd,La maldicion de Strahd: El retorno,00:00,00:00,javihu,0/5 | ,-\r\nLunes 10/2/2025,Partida de rol,Warhammer,Warhammer: Noches de Bohemia y de Ilusi\xc3\xb3n,17:00,21:00,javihu,0/5 | ,No subis de nivel\r\nLunes 10/2/2025,Partida de rol,Strahd,La maldicion de Strahd: El retorno,00:00,00:00,javihu,0/5 | ,-\r\nLunes 10/2/2025,Partida de rol,Warhammer,Warhammer: Noches de Bohemia y de Ilusi\xc3\xb3n,17:00,21:00,javihu,0/5 | ,No subis de nivel\r\nLunes 10/2/2025,Partida de rol,Strahd,La maldicion de Strahd: El retorno,00:00,00:00,javihu,0/5 | ,-\r\n'
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Users\PC\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.10_qbz5n2kfra8p0\LocalCache\local-packages\Python310\site-packages\discord\app_commands\tree.py", line 1240, in _call
+    await command._invoke_with_namespace(interaction, namespace)
+  File "C:\Users\PC\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.10_qbz5n2kfra8p0\LocalCache\local-packages\Python310\site-packages\discord\app_commands\commands.py", line 876, in _invoke_with_namespace
+    return await self._do_call(interaction, transformed_values)
+  File "C:\Users\PC\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.10_qbz5n2kfra8p0\LocalCache\local-packages\Python310\site-packages\discord\app_commands\commands.py", line 869, in _do_call
+    raise CommandInvokeError(self, e) from e
+discord.app_commands.errors.CommandInvokeError: Command 'listar' raised an exception: OSError: [Errno 22] Invalid argument: b'Dia,Tipo,Id,Nombre,Inicio,Fin,Director,Jugadores,Notas\r\nLunes 10/2/2025,Partida de rol,Warhammer,Warhammer: Noches de Bohemia y de Ilusi\xc3\xb3n,17:00,21:00,javihu,0/5 | ,No subis de nivel\r\nLunes 10/2/2025,Partida de rol,Strahd,La maldicion de Strahd: El retorno,00:00,00:00,javihu,0/5 | ,-\r\nLunes 10/2/2025,Partida de rol,Warhammer,Warhammer: Noches de Bohemia y de Ilusi\xc3\xb3n,17:00,21:00,javihu,0/5 | ,No subis de nivel\r\nLunes 10/2/2025,Partida de rol,Strahd,La maldicion de Strahd: El retorno,00:00,00:00,javihu,0/5 | ,-\r\nLunes 10/2/2025,Partida de rol,Warhammer,Warhammer: Noches de Bohemia y de Ilusi\xc3\xb3n,17:00,21:00,javihu,0/5 | ,No subis de nivel\r\nLunes 10/2/2025,Partida de rol,Strahd,La maldicion de Strahd: El retorno,00:00,00:00,javihu,0/5 | ,-\r\nLunes 10/2/2025,Partida de rol,Warhammer,Warhammer: Noches de Bohemia y de Ilusi\xc3\xb3n,17:00,21:00,javihu,0/5 | ,No subis de nivel\r\nLunes 10/2/2025,Partida de rol,Strahd,La maldicion de Strahd: El retorno,00:00,00:00,javihu,0/5 | ,-\r\nLunes 10/2/2025,Partida de rol,Warhammer,Warhammer: Noches de Bohemia y de Ilusi\xc3\xb3n,17:00,21:00,javihu,0/5 | ,No subis de nivel\r\nLunes 10/2/2025,Partida de rol,Strahd,La maldicion de Strahd: El retorno,00:00,00:00,javihu,0/5 | ,-\r\nLunes 10/2/2025,Partida de rol,Warhammer,Warhammer: Noches de Bohemia y de Ilusi\xc3\xb3n,17:00,21:00,javihu,0/5 | ,No subis de nivel\r\nLunes 10/2/2025,Partida de rol,Strahd,La maldicion de Strahd: El retorno,00:00,00:00,javihu,0/5 | ,-\r\n'
+[2025-02-09 16:54:46] [ERROR   ] discord.app_commands.tree: Ignoring exception in command 'listar'
+Traceback (most recent call last):
+  File "C:\Users\PC\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.10_qbz5n2kfra8p0\LocalCache\local-packages\Python310\site-packages\discord\app_commands\commands.py", line 850, in _do_call
+    return await self._callback(self.binding, interaction, **params)  # type: ignore
+  File "F:\Proyectos\BotBukanerosV2\bot-bukaneros\cogs\eventos.py", line 610, in listar
+    games.drop(columns=['Tipo', 'Id', 'Maximo', 'Notas'], inplace=True)
+  File "C:\Users\PC\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.10_qbz5n2kfra8p0\LocalCache\local-packages\Python310\site-packages\pandas\util\_decorators.py", line 331, in wrapper
+    return func(*args, **kwargs)
+  File "C:\Users\PC\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.10_qbz5n2kfra8p0\LocalCache\local-packages\Python310\site-packages\pandas\core\frame.py", line 5396, in drop
+    return super().drop(
+  File "C:\Users\PC\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.10_qbz5n2kfra8p0\LocalCache\local-packages\Python310\site-packages\pandas\util\_decorators.py", line 331, in wrapper
+    return func(*args, **kwargs)
+  File "C:\Users\PC\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.10_qbz5n2kfra8p0\LocalCache\local-packages\Python310\site-packages\pandas\core\generic.py", line 4505, in drop
+    obj = obj._drop_axis(labels, axis, level=level, errors=errors)
+  File "C:\Users\PC\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.10_qbz5n2kfra8p0\LocalCache\local-packages\Python310\site-packages\pandas\core\generic.py", line 4546, in _drop_axis
+    new_axis = axis.drop(labels, errors=errors)
+  File "C:\Users\PC\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.10_qbz5n2kfra8p0\LocalCache\local-packages\Python310\site-packages\pandas\core\indexes\base.py", line 6977, in drop
+    raise KeyError(f"{list(labels[mask])} not found in axis")
+KeyError: "['Maximo'] not found in axis"
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Users\PC\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.10_qbz5n2kfra8p0\LocalCache\local-packages\Python310\site-packages\discord\app_commands\tree.py", line 1240, in _call
+    await command._invoke_with_namespace(interaction, namespace)
+  File "C:\Users\PC\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.10_qbz5n2kfra8p0\LocalCache\local-packages\Python310\site-packages\discord\app_commands\commands.py", line 876, in _invoke_with_namespace
+    return await self._do_call(interaction, transformed_values)
+  File "C:\Users\PC\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.10_qbz5n2kfra8p0\LocalCache\local-packages\Python310\site-packages\discord\app_commands\commands.py", line 869, in _do_call
+    raise CommandInvokeError(self, e) from e
+discord.app_commands.errors.CommandInvokeError: Command 'listar' raised an exception: KeyError: "['Maximo'] not found in axis"
