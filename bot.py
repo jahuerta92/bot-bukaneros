@@ -6,11 +6,11 @@ import os
 import argparse
 import pandas as pd
 
-from dotenv import dotenv_values
+from dotenv import dotenv_values, load_dotenv
 
 from discord.ext import commands, tasks
 from discord import app_commands
-
+from pymongo import MongoClient
 from datetime import date
 import logging
 
@@ -18,8 +18,7 @@ import logging
 ####
 # CONFIG BOT
 ####
-
-config = dotenv_values(".env")
+load_dotenv() # Quitar en deploy
 
 BOT_PREFIX = '+'
 ADMIN_TAG = 'administrador'
@@ -34,18 +33,30 @@ args = argparse.parse_args()
 handler = logging.FileHandler(filename='discord.log', encoding='utf-8', mode='w')
 
 if args.mode == 'beta':
-    TOKEN = config['BETA_TOKEN']
+    TOKEN = os.getenv('BETA_TOKEN')
 elif args.mode == 'deploy':
-    TOKEN = config['DEPLOY_TOKEN']
-    
+    TOKEN = os.getenv('DEPLOY_TOKEN')
+
+MONGO_USER = os.getenv('MONGO_USER')
+MONGO_SECRET = os.getenv('MONGO_SECRET')
+
+#URI_DATABASE = f"mongodb://{MONGO_USER}:{MONGO_SECRET}@bukadb/Bukaneros?authSource=admin" # Docker
+URI_DATABASE = f"mongodb://{MONGO_USER}:{MONGO_SECRET}@localhost/Bukaneros?authSource=admin" # Local
+
 ####
 # BOT SETUP
 ####
+class Client(commands.Bot):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        
+        self.db_client = MongoClient(URI_DATABASE)
+        
+bot = Client(command_prefix='+',
+             description='Bot de Bukaneros. Usa +ayuda para ver los comandos disponibles.',
+             status=discord.Game(name="Sid Meier's Pirates!"),
+             intents=discord.Intents.all())
 
-bot = commands.Bot(command_prefix='+',
-                   description='Bot de Bukaneros. Usa +ayuda para ver los comandos disponibles.',
-                   status=discord.Game(name="Sid Meier's Pirates!"),
-                   intents=discord.Intents.all())
 @bot.event
 async def on_ready():
     for filename in os.listdir('./cogs'):

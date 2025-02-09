@@ -1,24 +1,37 @@
+networks:
+  bukanet:
+    driver: bridge
 services:
-  bot:
-    build: .
-    container_name: bukabot
-    restart: always
-    depends_on:
-      - database
-    networks:
-      - bukanet
-
   database:
     image: mongo:8.0.4
     container_name: bukadb
     restart: always
     volumes:
       - ./data:/data/db
+    networks:
+      - bukanet
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=$MONGO_USER
+      - MONGO_INITDB_ROOT_PASSWORD=$MONGO_SECRET
+      - MONGO_INITDB_DATABASE=Bukaneros
+    env_file:
+      - .env
     ports:
       - "27017:27017"
+  
+  bot:
+    build: .
+    container_name: bukabot
+    restart: always
+    environment:
+      - MONGO_USER=$MONGO_USER
+      - MONGO_SECRET=$MONGO_SECRET
+      - BETA_TOKEN=$BETA_TOKEN
+      - DEPLOY_TOKEN=$DEPLOY_TOKEN
+    env_file:
+      - .env
+    depends_on:
+      - database
     networks:
       - bukanet
 
-networks:
-  bukanet:
-    driver: bridge
