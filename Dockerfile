@@ -1,6 +1,7 @@
 FROM python:3.10-bullseye
-COPY requirements.txt /app/
-WORKDIR /app
+RUN mkdir /app/bot
+WORKDIR /bot
+COPY requirements.txt .
 RUN pip3 install -r requirements.txt
 COPY . .
 CMD ["python3", "bot.py", "--mode", "beta"]

@@ -1,0 +1,88 @@
+[2025-02-10 21:52:55] [INFO    ] discord.client: logging in using static token
+[2025-02-10 21:52:56] [INFO    ] discord.gateway: Shard ID None has connected to Gateway (Session ID: 3c5dec07b01bf1c7f03d5090783c5e01).
+[2025-02-10 21:53:36] [ERROR   ] discord.ui.view: Ignoring exception in view <EventsButton timeout=180 children=3> for item <Button style=<ButtonStyle.success: 3> url=None disabled=False label='Apuntarme' emoji=<PartialEmoji animated=False name='✔️' id=None> row=None>
+Traceback (most recent call last):
+  File "C:\Users\PC\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.10_qbz5n2kfra8p0\LocalCache\local-packages\Python310\site-packages\discord\ui\view.py", line 425, in _scheduled_task
+    await item.callback(interaction)
+  File "F:\Proyectos\BotBukanerosV2\bot-bukaneros\bot\cogs\eventos.py", line 355, in apuntar_boton
+    await self._manage_check(interaction, not check, msg)
+  File "F:\Proyectos\BotBukanerosV2\bot-bukaneros\bot\cogs\eventos.py", line 329, in _manage_check
+    assert not check, f' <EVENTOS> Error..., {msg}'
+AssertionError:  <EVENTOS> Error..., El jugador javihu ya está en la lista.
+[2025-02-10 21:53:58] [ERROR   ] discord.app_commands.tree: Ignoring exception in command 'listar'
+Traceback (most recent call last):
+  File "C:\Users\PC\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.10_qbz5n2kfra8p0\LocalCache\local-packages\Python310\site-packages\discord\app_commands\commands.py", line 850, in _do_call
+    return await self._callback(self.binding, interaction, **params)  # type: ignore
+  File "F:\Proyectos\BotBukanerosV2\bot-bukaneros\bot\cogs\eventos.py", line 691, in listar
+    await interaction.followup.send(content=message, file=file_games, ephemeral=True)
+  File "C:\Users\PC\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.10_qbz5n2kfra8p0\LocalCache\local-packages\Python310\site-packages\discord\webhook\async_.py", line 1726, in send
+    data = await adapter.execute_webhook(
+  File "C:\Users\PC\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.10_qbz5n2kfra8p0\LocalCache\local-packages\Python310\site-packages\discord\webhook\async_.py", line 221, in request
+    raise HTTPException(response, data)
+discord.errors.HTTPException: 400 Bad Request (error code: 50035): Invalid Form Body
+In content: Must be 2000 or fewer in length.
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Users\PC\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.10_qbz5n2kfra8p0\LocalCache\local-packages\Python310\site-packages\discord\app_commands\tree.py", line 1240, in _call
+    await command._invoke_with_namespace(interaction, namespace)
+  File "C:\Users\PC\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.10_qbz5n2kfra8p0\LocalCache\local-packages\Python310\site-packages\discord\app_commands\commands.py", line 876, in _invoke_with_namespace
+    return await self._do_call(interaction, transformed_values)
+  File "C:\Users\PC\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.10_qbz5n2kfra8p0\LocalCache\local-packages\Python310\site-packages\discord\app_commands\commands.py", line 869, in _do_call
+    raise CommandInvokeError(self, e) from e
+discord.app_commands.errors.CommandInvokeError: Command 'listar' raised an exception: HTTPException: 400 Bad Request (error code: 50035): Invalid Form Body
+In content: Must be 2000 or fewer in length.
+[2025-02-10 21:55:59] [ERROR   ] discord.app_commands.tree: Ignoring exception in command 'listar'
+Traceback (most recent call last):
+  File "C:\Users\PC\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.10_qbz5n2kfra8p0\LocalCache\local-packages\Python310\site-packages\discord\app_commands\commands.py", line 850, in _do_call
+    return await self._callback(self.binding, interaction, **params)  # type: ignore
+  File "F:\Proyectos\BotBukanerosV2\bot-bukaneros\bot\cogs\eventos.py", line 677, in listar
+    games.set_index('Dia', inplace=True)
+  File "C:\Users\PC\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.10_qbz5n2kfra8p0\LocalCache\local-packages\Python310\site-packages\pandas\util\_decorators.py", line 331, in wrapper
+    return func(*args, **kwargs)
+  File "C:\Users\PC\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.10_qbz5n2kfra8p0\LocalCache\local-packages\Python310\site-packages\pandas\core\frame.py", line 6009, in set_index
+    raise KeyError(f"None of {missing} are in the columns")
+KeyError: "None of ['Dia'] are in the columns"
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Users\PC\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.10_qbz5n2kfra8p0\LocalCache\local-packages\Python310\site-packages\discord\app_commands\tree.py", line 1240, in _call
+    await command._invoke_with_namespace(interaction, namespace)
+  File "C:\Users\PC\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.10_qbz5n2kfra8p0\LocalCache\local-packages\Python310\site-packages\discord\app_commands\commands.py", line 876, in _invoke_with_namespace
+    return await self._do_call(interaction, transformed_values)
+  File "C:\Users\PC\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.10_qbz5n2kfra8p0\LocalCache\local-packages\Python310\site-packages\discord\app_commands\commands.py", line 869, in _do_call
+    raise CommandInvokeError(self, e) from e
+discord.app_commands.errors.CommandInvokeError: Command 'listar' raised an exception: KeyError: "None of ['Dia'] are in the columns"
+[2025-02-10 21:58:27] [ERROR   ] discord.app_commands.tree: Ignoring exception in command 'listar'
+Traceback (most recent call last):
+  File "C:\Users\PC\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.10_qbz5n2kfra8p0\LocalCache\local-packages\Python310\site-packages\discord\app_commands\commands.py", line 850, in _do_call
+    return await self._callback(self.binding, interaction, **params)  # type: ignore
+  File "F:\Proyectos\BotBukanerosV2\bot-bukaneros\bot\cogs\eventos.py", line 677, in listar
+    games.set_index('Dia', inplace=True)
+  File "C:\Users\PC\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.10_qbz5n2kfra8p0\LocalCache\local-packages\Python310\site-packages\pandas\util\_decorators.py", line 331, in wrapper
+    return func(*args, **kwargs)
+  File "C:\Users\PC\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.10_qbz5n2kfra8p0\LocalCache\local-packages\Python310\site-packages\pandas\core\frame.py", line 6009, in set_index
+    raise KeyError(f"None of {missing} are in the columns")
+KeyError: "None of ['Dia'] are in the columns"
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Users\PC\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.10_qbz5n2kfra8p0\LocalCache\local-packages\Python310\site-packages\discord\app_commands\tree.py", line 1240, in _call
+    await command._invoke_with_namespace(interaction, namespace)
+  File "C:\Users\PC\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.10_qbz5n2kfra8p0\LocalCache\local-packages\Python310\site-packages\discord\app_commands\commands.py", line 876, in _invoke_with_namespace
+    return await self._do_call(interaction, transformed_values)
+  File "C:\Users\PC\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.10_qbz5n2kfra8p0\LocalCache\local-packages\Python310\site-packages\discord\app_commands\commands.py", line 869, in _do_call
+    raise CommandInvokeError(self, e) from e
+discord.app_commands.errors.CommandInvokeError: Command 'listar' raised an exception: KeyError: "None of ['Dia'] are in the columns"
+[2025-02-10 22:24:48] [ERROR   ] discord.ui.view: Ignoring exception in view <EventsButton timeout=180 children=3> for item <Button style=<ButtonStyle.success: 3> url=None disabled=False label='Apuntarme' emoji=<PartialEmoji animated=False name='✔️' id=None> row=None>
+Traceback (most recent call last):
+  File "C:\Users\PC\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.10_qbz5n2kfra8p0\LocalCache\local-packages\Python310\site-packages\discord\ui\view.py", line 425, in _scheduled_task
+    await item.callback(interaction)
+  File "F:\Proyectos\BotBukanerosV2\bot-bukaneros\bot\cogs\eventos.py", line 358, in apuntar_boton
+    await self._manage_check(interaction, not check, msg)
+  File "F:\Proyectos\BotBukanerosV2\bot-bukaneros\bot\cogs\eventos.py", line 332, in _manage_check
+    assert not check, f' <EVENTOS> Error..., {msg}'
+AssertionError:  <EVENTOS> Error..., El jugador javihu ya está en la lista.
