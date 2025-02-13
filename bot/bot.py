@@ -8,10 +8,8 @@ import pandas as pd
 
 from dotenv import dotenv_values, load_dotenv
 
-from discord.ext import commands, tasks
-from discord import app_commands
+from discord.ext import commands
 from pymongo import MongoClient
-from datetime import date
 import logging
 
 
@@ -39,7 +37,7 @@ elif args.mode == 'deploy':
 
 MONGO_USER = os.getenv('MONGO_USER')
 MONGO_SECRET = os.getenv('MONGO_SECRET')
-
+GUILD_ID = os.getenv('GUILD_ID')
 #URI_DATABASE = f"mongodb://{MONGO_USER}:{MONGO_SECRET}@bukadb/Bukaneros?authSource=admin" # Docker
 URI_DATABASE = f"mongodb://{MONGO_USER}:{MONGO_SECRET}@localhost/Bukaneros?authSource=admin" # Local
 
@@ -51,9 +49,9 @@ class Client(commands.Bot):
         super().__init__(*args, **kwargs)
         
         self.db_client = MongoClient(URI_DATABASE)
-        
+
 bot = Client(command_prefix='+',
-             description='Bot de Bukaneros. Usa +ayuda para ver los comandos disponibles.',
+             description='Bot de Bukaneros.',
              status=discord.Game(name="Sid Meier's Pirates!"),
              intents=discord.Intents.all())
 
@@ -63,7 +61,7 @@ async def on_ready():
         if filename.endswith('.py'):
             await bot.load_extension(f'cogs.{filename[:-3]}')
 
-    print(f'Bot is ready.')
+    print(f' <SYSTEM> Bot is ready.')
 
 ####
 # COGS SETUP AND AND ADMINISTRATION
@@ -116,7 +114,7 @@ async def load(ctx, extension):
         print(f' <SYSTEM>  {extension} module loaded!')
         await ctx.send(f'`<SYSTEM>` "{extension}" module loaded!')
     except Exception as e:
-        print(f'<SYSTEM> Error loading modules: {e}') 
+        print(f' <SYSTEM> Error loading modules: {e}') 
 
 @bot.command()
 @commands.has_role(ADMIN_TAG)
@@ -128,35 +126,8 @@ async def unload(ctx, extension):
         print(f' <SYSTEM>  {extension} module unloaded!')
         await ctx.send(f'`<SYSTEM>` "{extension}" module unloaded!')
     except Exception as E:
-        print(f'<SYSTEM> Error unloading modules: {E}') 
+        print(f' <SYSTEM> Error unloading modules: {E}') 
 
         
-print('Starting bot...')
+print(' <SYSTEM> Starting bot...')
 bot.run(TOKEN, log_handler=handler)
-
-'''
-@client.tree.command(name='prueba', 
-                     description='Comando de prueba')
-async def prueba(interaction: discord.Interaction, string: str):
-    await interaction.response.send('Prueba')
-'''
-
-
-'''
-@bot.tree.command(name='nuevo', 
-                  description='Comando para crear una partida.',
-                  guild=GUILD)
-async def nuevo(interaction: discord.Interaction, name: str, day: str = None):
-    await interaction.response.send_message('Partida creada.', ephemeral=True)
-'''
-
-'''
-@bot.command()
-@commands.has_role(ADMIN_TAG)
-async def sync(ctx):
-    try:
-        synced_commands = await bot.tree.sync(guild=GUILD)
-        print(f'Synced {len(synced_commands)} commands to {GUILD.id}.')
-    except Exception as e:
-        print(f'Error syncing commands: {e}')
-'''

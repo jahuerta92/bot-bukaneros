@@ -1,4 +1,4 @@
-from typing import List, Tuple
+from typing import List, Literal, Tuple
 import discord
 import pandas as pd
 import io
@@ -14,11 +14,13 @@ from datetime import date
 from datetime import datetime
 from dateutil.parser import parse
 from dateutil.relativedelta import relativedelta
-from pymongo import MongoClient
 
-USER = os.getenv('MONGO_USER')
-PWD = os.getenv('MONGO_PASSWORD')
+ADMIN_TAG = 'administrador'
+POLIZON_TAG = 'polizón'
 
+#########################################################################
+# DIA CLASS                                                             #
+#########################################################################
 class Dia:
     LEGAL_DAYS = [['lunes', 'l', 'lun', 'Lunes'],
                   ['martes', 'm', 'mar', 'Martes'],
@@ -110,6 +112,10 @@ class Dia:
         weekday = self.LEGAL_DAYS[i][-1]
         return f'{weekday} {self.date.day}/{self.date.month}/{self.date.year}'
 
+#########################################################################
+# HORA CLASS                                                            #
+#########################################################################
+
 class Hora:
     def __init__(self, hour=None, *args, **kwargs):
         
@@ -138,6 +144,10 @@ class Hora:
 
     def __str__(self):
         return f'{self.hour:02}:{self.minute:02}'
+
+#########################################################################
+# JUGADORES CLASS                                                       #
+#########################################################################
 
 class Jugadores:
     def __init__(self, players = None, maximo = None, *args, **kwargs):
@@ -170,7 +180,14 @@ class Jugadores:
         if len(self.players) > self.maximo:
             raise ValueError('Demasiados jugadores.')
 
-
+    @staticmethod
+    def from_str(players):
+        p, m = players.split('-')
+        clean = p.split('*')
+        _, str_max = m.split('/')
+        maximo = int(str_max)
+        return [c.strip() for c in clean if c != ''], maximo
+    
     def add_player(self, player):
         if len(self.players) >= self.maximo:
             return False, 'Demasiados jugadores.'
@@ -197,9 +214,12 @@ class Jugadores:
         n_players = len(self.players)
         return f'* {players}\n- {n_players}/{self.maximo}'
 
+#########################################################################
+# EVENTO CLASS                                                          #
+#########################################################################
+
 class Evento:
     EVENT_TAG = f'🏴‍☠️ Evento Bukanero 🏴‍☠️'
-    LOGO = 'https://pbs.twimg.com/profile_images/1781974320324980736/65c8ygwS_400x400.jpg'
     def __init__(self, 
                  tipo: str = None, 
                  id: str = None, 
@@ -291,13 +311,20 @@ class Evento:
     def sort_players(self):
         self.jugadores.sort_players()
     
-    def to_embed(self, icon_director):
+    def to_embed(self, interaction: discord.Interaction):
         # Se crea un embed con los campos del evento
         embed = discord.Embed(title=self.tipo)
         last_update = datetime.now().strftime('%d/%m/%Y %H:%M')
-        embed.set_footer(text=f'{self.EVENT_TAG} - {last_update} - Arrr!', icon_url=self.LOGO)
-        embed.set_author(name=self.director, icon_url=icon_director)
-        embed.set_thumbnail(url=self.LOGO)
+        
+        icon_director = interaction.user.display_avatar
+        icon_guild = interaction.guild.icon
+        icon_bot = interaction._client.user.display_avatar
+        
+        embed.set_footer(text=f'{self.EVENT_TAG} - {last_update} - Arrr!', 
+                         icon_url= None if icon_bot is None else icon_bot.url)
+        embed.set_author(name=self.director, 
+                         icon_url= None if icon_director is None else icon_director.url)
+        embed.set_thumbnail(url= None if icon_guild is None else icon_guild.url)
         
         for key, value in self.__dict__.items():
             key = key.capitalize()
@@ -321,96 +348,129 @@ class Evento:
         return unidecode(self.id.lower()) == unidecode(id.lower())
     
     def unique_id(self):
-        return f'{self.id}_{self.director}_{self.dia}_{self.inicio}'
+        return f'{hash(self.link)}'
 
-class EventsButton(discord.ui.View):
-    def __init__(self, *, database, timeout=None):
-        super().__init__(timeout=timeout or 180)
-        self.database = database
 
-    async def _manage_check(self, interaction, check, msg) -> Tuple[bool, str]:       
-        if check:
-            await interaction.followup.send(content=msg, ephemeral=True)
-        
-        assert not check, f' <EVENTOS> Error..., {msg}'
+#########################################################################
+# ADDITIONAL METHODS                                                    #
+#########################################################################
 
-    def _log_event(self, event, status='CREATED', ongoing=True) -> None:
+async def _manage_check(interaction, check, msg) -> Tuple[bool, str]:
+    if check:
+        await interaction.followup.send(content=msg, ephemeral=True)
+    
+    assert not check, f' <EVENTOS> Error..., {msg}'
+
+
+def _log_event(db, event, status='CREATED', ongoing=True) -> None:
         event_dict = event.to_dict()
         event_dict['timestamp'] = datetime.now()
         event_dict['unique_id'] = event.unique_id()
         event_dict['status'] = status
         event_dict['ongoing'] = ongoing
+        player_list, max_players = Jugadores.from_str(event_dict['jugadores'])
+        event_dict['jugadores'] = player_list
+        event_dict['numero'] = len(player_list)
+        event_dict['maximo'] = max_players
         filter = {'unique_id': event_dict['unique_id']}
         
-        if status == 'CREATED':
-            self.database.insert_one(event_dict)
+        check = db.find_one(filter)
+        
+        if check is None:
+            db.insert_one(event_dict)
         else:
-            self.database.update_one(filter, {'$set': event_dict})
+            db.update_one(filter, {'$set': event_dict})
+
+def _manage_author(interaction: discord.Interaction, additional_author: str = None) -> str:
+    if additional_author is None:
+        author = interaction.user.name
+        for role in interaction.user.roles:
+            if unidecode(role.name.lower()) == unidecode(POLIZON_TAG.lower()):
+                author = f'{author} (Polizón)'
+        
+    else:
+        author = additional_author
+    
+    return author
+        
+#########################################################################
+# BUTTONS                                                               #
+#########################################################################
+
+class EventsButton(discord.ui.View):
+    def __init__(self, *, database, timeout=None):
+        super().__init__(timeout=timeout or 180)
+        self.database = database
             
     @discord.ui.button(label="Apuntarme", style=discord.ButtonStyle.success, emoji="✔️")
     async def apuntar_boton(self, interaction: discord.Interaction, button: discord.ui.Button):
         await interaction.response.defer()
-        author = interaction.user.name
+        
+        author = _manage_author(interaction)
+        
         message = interaction.message
         check, event = Evento.create(message.embeds[0])
         
-        await self._manage_check(interaction, not check, event)
+        await _manage_check(interaction, not check, event)
             
         check, msg = event.add_player(author)
                 
-        await self._manage_check(interaction, not check, msg)
+        await _manage_check(interaction, not check, msg)
         
-        await message.edit(content=event.summarize(), embed=event.to_embed(interaction.user.display_avatar.url))
+        await message.edit(content=event.summarize(), embed=event.to_embed(interaction))
         await interaction.followup.send(content=f'{author} se ha apuntado a **{event.id}**.', ephemeral=True)
-        self._log_event(event, status='ACTIVE', ongoing=True)
+        _log_event(self.database, event, status='ACTIVE', ongoing=True)
 
     @discord.ui.button(label="Quitarme", style=discord.ButtonStyle.grey, emoji="❌")
     async def quitar_boton(self, interaction: discord.Interaction, button: discord.ui.Button):
         await interaction.response.defer()
-        author = interaction.user.name
+        
+        author = _manage_author(interaction)
+        
         message = interaction.message
         check, event = Evento.create(message.embeds[0])
         
-        await self._manage_check(interaction, not check, event)
+        await _manage_check(interaction, not check, event)
             
         check, msg = event.remove_player(author)
                 
-        await self._manage_check(interaction, not check, msg)
+        await _manage_check(interaction, not check, msg)
                     
-        await message.edit(content=event.summarize(), embed=event.to_embed(interaction.user.display_avatar.url))
+        await message.edit(content=event.summarize(), embed=event.to_embed(interaction))
         await interaction.followup.send(content=f'{author} se ha quitado de **{event.id}**.', ephemeral=True)
-        self._log_event(event, status='ACTIVE', ongoing=True)
+        _log_event(self.database, event, status='ACTIVE', ongoing=True)
     
-    @discord.ui.button(label="Anular", style=discord.ButtonStyle.danger, emoji="💀")
+    @discord.ui.button(label="Anular (Solo directores)", style=discord.ButtonStyle.danger, emoji="💀")
     async def anular_boton(self, interaction: discord.Interaction, button: discord.ui.Button):
         await interaction.response.defer()
-        author = interaction.user.name
+        
+        author = _manage_author(interaction)
+
         message = interaction.message
         check, event = Evento.create(message.embeds[0])
         
-        await self._manage_check(interaction, not check, event)
-        await self._manage_check(interaction, event.director != author, f'No eres el director del evento **{event.id}**.')
+        await _manage_check(interaction, not check, event)
+        is_admin = any(unidecode(role.name.lower()) == unidecode(ADMIN_TAG.lower()) for role in interaction.user.roles)
+        await _manage_check(interaction, 
+                            not is_admin and event.director != author, 
+                            f'No eres el director del evento **{event.id}**.')
         
         await message.unpin()
         await message.edit(view=None)
         await interaction.followup.send(content=f'Evento **{event.id}** anulado con éxito.', ephemeral=True)
-        self._log_event(event, status='CANCELLED', ongoing=False)
-        
-class Events(commands.Cog):
-    ADMIN_TAG = 'administrador'
+        _log_event(self.database, event, status='CANCELLED', ongoing=False)
 
+#########################################################################
+# COG                                                               #
+#########################################################################
+
+class Events(commands.Cog):
     def __init__(self, client):
         self.client = client
         print(f' <EVENTOS> Conectando a la base de datos...')
         self.database = client.db_client['Bukaneros']['Eventos']
-        print(f' <EVENTOS> Conexión establecida.')
-    
-    async def _manage_check(self, interaction, check, msg) -> Tuple[bool, str]:       
-        if check:
-            await interaction.followup.send(content=msg, ephemeral=True)
+        print(f' <EVENTOS> Conexión establecida.')        
         
-        assert not check, f' <EVENTOS> Error..., {msg}'
-    
     async def _retrieve_pinned(self, interaction) -> List[Tuple[Evento, discord.Message]]:
         pinned = await interaction.channel.pins()
         events = []
@@ -420,21 +480,6 @@ class Events(commands.Cog):
                 _, event = Evento.create(embed)
                 events.append((event, message))
         return events
-    
-    def _log_event(self, event, status='CREATED', ongoing=True) -> None:
-        event_dict = event.to_dict()
-        event_dict['timestamp'] = datetime.now()
-        event_dict['unique_id'] = event.unique_id()
-        event_dict['status'] = status
-        event_dict['ongoing'] = ongoing
-        filter = {'unique_id': event_dict['unique_id']}
-        
-        check = self.database.find_one(filter)
-        
-        if check is None:
-            self.database.insert_one(event_dict)
-        else:
-            self.database.update_one(filter, {'$set': event_dict})
     
     @commands.Cog.listener()
     async def on_ready(self):
@@ -453,11 +498,24 @@ class Events(commands.Cog):
                     maximo: int = None,
                     notas: str = None,
                     tipo: str = None,
-                    ): 
+                    ):
+        '''
+        Crea un evento para dirigir.
+        
+        Args:
+            id (str): Identificador del evento.
+            nombre (str): Nombre del evento.
+            dia (str): Día del evento.
+            inicio (str): Hora de inicio del evento.
+            fin (str): Hora de fin del evento.
+            maximo (int): Número máximo de jugadores.
+            notas (str): Notas adicionales.
+            tipo (str): Tipo de evento
+            
+        '''
         await interaction.response.defer()
         print(' <EVENTOS> Creando evento...')
-        author = interaction.user.name
-        
+        author = _manage_author(interaction)            
         check, event = Evento.create(
                         tipo=tipo,
                         id=id,
@@ -470,25 +528,25 @@ class Events(commands.Cog):
                         notas=notas
                     )
         
-        await self._manage_check(interaction, not check, event)
+        await _manage_check(interaction, not check, event)
         
         # Check if there are any old events pinned:
         old_events = await self._retrieve_pinned(interaction)
 
         # Check if any of the old events is the same as the new one:
-        await self._manage_check(interaction, 
+        await _manage_check(interaction, 
                                  any(event.is_eq(e) for e, _ in old_events), 
                                  f'Ya existe un evento con id **{id}**.')       
 
         message = await interaction.channel.send('Creando evento...')           
         event.set_link(message.jump_url)
         await message.edit(content=event.summarize(), 
-                           embed=event.to_embed(interaction.user.display_avatar.url), 
+                           embed=event.to_embed(interaction), 
                            view=EventsButton(database=self.database))
         await message.pin()
         
         await interaction.followup.send(content='Evento creado con éxito.', ephemeral=True)
-        self._log_event(event, status='CREATED', ongoing=True)   
+        _log_event(self.database, event, status='CREATED', ongoing=True)   
         print(' <EVENTOS> Evento creado con exito...')
 
     @app_commands.command(name='anular',
@@ -498,24 +556,61 @@ class Events(commands.Cog):
                      interaction: discord.Interaction,
                      id: str,
                      ):
+        '''
+        Anula un evento que diriges.
+        
+        Args:
+            id (str): Identificador del evento.
+        '''
         await interaction.response.defer()
         print(' <EVENTOS> Anulando evento...')
         
-        author = interaction.user.name
-                
+        author = _manage_author(interaction)
+
         old_events = await self._retrieve_pinned(interaction)
         
         for event, message in old_events:
             if event.is_eq_id(id):
-                await self._manage_check(interaction, 
-                                         event.director != author, 
-                                         f'No eres el director del evento **{id}**.')
-                
+                is_admin = any(unidecode(role.name.lower()) == unidecode(ADMIN_TAG.lower()) for role in interaction.user.roles)
+                await _manage_check(interaction, 
+                                    not is_admin and event.director != author, 
+                                    f'No eres el director del evento **{event.id}**.')        
                 await message.unpin()
                 await message.edit(view=None)
                 await interaction.followup.send(content=f'Evento **{id}** anulado con éxito.', ephemeral=True)
                 print(' <EVENTOS> Evento anulada con exito')        
-                self._log_event(event, status='CANCELLED', ongoing=False)   
+                _log_event(self.database, event, status='CANCELLED', ongoing=False)   
+                return 
+        
+        await interaction.followup.send(content=f'No se ha encontrado la evento **{id}**.', ephemeral=True)
+
+    @app_commands.command(name='finalizar',
+                          description='Finaliza un evento manualmente (Solo administradores).',
+                          )
+    @commands.has_role(ADMIN_TAG)
+    async def finalizar(self, 
+                     interaction: discord.Interaction,
+                     id: str,
+                     ):
+        '''
+        Finaliza un evento manualmente (Solo administradores).
+        
+        Args:
+            id (str): Identificador del evento.
+        '''
+        await interaction.response.defer()
+        print(' <EVENTOS> Finalizando evento...')
+        
+        # NO check for polizon, as it is an admin command
+        old_events = await self._retrieve_pinned(interaction)
+        
+        for event, message in old_events:
+            if event.is_eq_id(id):       
+                await message.unpin()
+                await message.edit(view=None)
+                await interaction.followup.send(content=f'Evento **{id}** finalizado con éxito.', ephemeral=True)
+                _log_event(self.database, event, status='FINALIZED', ongoing=False)
+                print(' <EVENTOS> Evento finalizado con exito')        
                 return 
         
         await interaction.followup.send(content=f'No se ha encontrado la evento **{id}**.', ephemeral=True)
@@ -528,10 +623,18 @@ class Events(commands.Cog):
                       id: str,
                       jugador: str = None,   
                       ):
+        '''
+        Apuntate a un evento.
+        
+        Args:
+            id (str): Identificador del evento.
+            jugador (str): Nombre del jugador a apuntar.
+        '''
+          
         await interaction.response.defer()
         print(' <EVENTOS> Apuntando al evento...')
-            
-        author = interaction.user.name if jugador is None else jugador
+         
+        author = _manage_author(interaction, jugador)
             
         old_events = await self._retrieve_pinned(interaction)
             
@@ -539,11 +642,11 @@ class Events(commands.Cog):
             if event.is_eq_id(id):
                 check, msg = event.add_player(author)
                 
-                await self._manage_check(interaction, not check, msg)
+                await _manage_check(interaction, not check, msg)
                     
-                await message.edit(content=event.summarize(), embed=event.to_embed(interaction.user.display_avatar.url))
+                await message.edit(content=event.summarize(), embed=event.to_embed(interaction))
                 await interaction.followup.send(content=f'{author} se ha apuntado a **{id}**.', ephemeral=True)
-                self._log_event(event, status='ACTIVE', ongoing=True)   
+                _log_event(self.database, event, status='ACTIVE', ongoing=True)   
 
                 print(' <EVENTOS> Apuntado con exito')
                 return 
@@ -558,10 +661,17 @@ class Events(commands.Cog):
                      id: str,
                      jugador: str = None,
                      ):
+            '''
+            Desapuntate de un evento.
+            
+            Args:
+                id (str): Identificador del evento.
+                jugador (str): Nombre del jugador a desapuntar.
+            '''
             await interaction.response.defer()
             print(' <EVENTOS> Quitando de la evento...')
                 
-            author = interaction.user.name if jugador is None else jugador
+            author = _manage_author(interaction, jugador)
                 
             old_events = await self._retrieve_pinned(interaction)
                 
@@ -569,11 +679,11 @@ class Events(commands.Cog):
                 if event.is_eq_id(id):
                     check, msg = event.remove_player(author)
                     
-                    await self._manage_check(interaction, not check, msg)
+                    await _manage_check(interaction, not check, msg)
                         
-                    await message.edit(content=event.summarize(), embed=event.to_embed(interaction.user.display_avatar.url))
+                    await message.edit(content=event.summarize(), embed=event.to_embed(interaction))
                     await interaction.followup.send(content=f'{author} ha salido de **{id}**.', ephemeral=True)
-                    self._log_event(event, status='ACTIVE', ongoing=True)   
+                    _log_event(self.database, event, status='ACTIVE', ongoing=True)   
                     print(' <EVENTOS> Quitado con exito')
                     return 
                 
@@ -594,18 +704,34 @@ class Events(commands.Cog):
                         notas: str = None,
                         tipo: str = None,
                         ):
+        '''
+        Modifica un evento que diriges.
+        
+        Args:
+            id (str): Identificador del evento.
+            nueva_id (str): Nuevo identificador del evento.
+            nombre (str): Nuevo nombre del evento.
+            dia (str): Nuevo día del evento.
+            inicio (str): Nueva hora de inicio del evento.
+            fin (str): Nueva hora de fin del evento.
+            maximo (int): Nuevo número máximo de jugadores.
+            notas (str): Nuevas notas adicionales.
+            tipo (str): Nuevo tipo de evento
+        '''
+        
         await interaction.response.defer()
         print(' <EVENTOS> Modificando evento...')
         
-        author = interaction.user.name
+        author = _manage_author(interaction)
         
         old_events = await self._retrieve_pinned(interaction)
         
         for event, message in old_events:
             if event.is_eq_id(id):
-                await self._manage_check(interaction, 
-                                         event.director != author, 
-                                         f'No eres el director de la evento **{id}**.')
+                is_admin = any(unidecode(role.name.lower()) == unidecode(ADMIN_TAG.lower()) for role in interaction.user.roles)
+                await _manage_check(interaction, 
+                                    not is_admin and event.director != author, 
+                                    f'No eres el director del evento **{event.id}**.')        
                 
                 try:
                     event.update_field(id=nueva_id, 
@@ -620,9 +746,9 @@ class Events(commands.Cog):
                     await interaction.followup.send(content=f'Error al modificar la evento: {e}', ephemeral=True)
                     return
                 
-                await message.edit(content=event.summarize(), embed=event.to_embed(interaction.user.display_avatar.url))
+                await message.edit(content=event.summarize(), embed=event.to_embed(interaction))
                 await interaction.followup.send(content=f'Evento **{id}** modificado con éxito.', ephemeral=True)
-                self._log_event(event, status='ACTIVE', ongoing=True)
+                _log_event(self.database, event, status='ACTIVE', ongoing=True)
                 print(' <EVENTOS> Evento modificado con exito')   
                 return
         
@@ -637,11 +763,19 @@ class Events(commands.Cog):
                     nueva_id: str,
                     jugador: str = None,
                     ):
+        '''
+        Mueve un jugador a otro evento.
+        
+        Args:
+            id (str): Identificador del evento de origen.
+            nueva_id (str): Identificador del evento de destino.
+            jugador (str): Nombre del jugador a mover.        
+        '''
         await interaction.response.defer()
         print(' <EVENTOS> Moviendo jugador...')
         
-        author = interaction.user.name if jugador is None else jugador
-        
+        author = _manage_author(interaction, jugador)
+                   
         old_events = await self._retrieve_pinned(interaction)
         
         check_event = False
@@ -649,25 +783,25 @@ class Events(commands.Cog):
             if event.is_eq_id(id):                
                 check, msg = event.remove_player(author)
                 
-                await self._manage_check(interaction, not check, msg)
+                await _manage_check(interaction, not check, msg)
                 
                 await message.edit(content=event.summarize(), 
-                                   embed=event.to_embed(interaction.user.display_avatar.url))
+                                   embed=event.to_embed(interaction))
                 
                 check_event = True
         
-        await self._manage_check(interaction, not check_event, f'No se ha encontrado el evento de origen **{id}**.')
+        await _manage_check(interaction, not check_event, f'No se ha encontrado el evento de origen **{id}**.')
         
         for event, message in old_events:
             if event.id == nueva_id:
                 check, msg = event.add_player(author)
                 
-                await self._manage_check(interaction, not check, msg)
+                await _manage_check(interaction, not check, msg)
                 
                 await message.edit(content=event.summarize(), 
-                                   embed=event.to_embed(interaction.user.display_avatar.url))
+                                   embed=event.to_embed(interaction))
                 await interaction.followup.send(content=f'{author} se ha movido de **{id}** a **{nueva_id}**.', ephemeral=True)
-                self._log_event(event, status='ACTIVE', ongoing=True)  
+                _log_event(self.database, event, status='ACTIVE', ongoing=True)  
                 print(' <EVENTOS> Movido con exito')
                 return
             
@@ -677,9 +811,12 @@ class Events(commands.Cog):
                             description='Muestra las partidas en curso.',
                             )
     async def listar(self, interaction: discord.Interaction):
+        '''
+        Muestra las partidas en curso.
+        '''
+        
         await interaction.response.defer()
                 
-        to_check = []
         retrieved_events = self.database.find({'ongoing': True})
                         
         games = pd.DataFrame(retrieved_events)
@@ -700,10 +837,10 @@ class Events(commands.Cog):
             nombre = row['Nombre'].capitalize()
             director = row['Director']
             inicio = row['Inicio']
-            jugadores = row['Jugadores']
-            _, m = jugadores.split('-')
+            jugadores = row['Numero']
+            maximo = row['Maximo']
             link = row['Link']
-            message += f'# {idx}\n* {nombre}, Dirige **{director}** a las **{inicio}**\n* Quedan {m} huecos.\n* Apúntante en {link}\n'
+            message += f'# {idx}\n* {nombre}, Dirige **{director}** a las **{inicio}**\n* Quedan {maximo-jugadores} huecos.\n* Apúntante en {link}\n'
         
         if len(message) > 2000:
             message = 'Hay demasiados eventos en curso. Consulta el archivo con información.'
@@ -713,16 +850,30 @@ class Events(commands.Cog):
         #await interaction.followup.send(content=message, file=file_games, ephemeral=True)
 
     @app_commands.command(name='recoger',
-                          description='Recoge los eventos finalizados.',
+                          description='Recoge todos los eventos finalizados en un margen de tiempo. (Solo administradores)',
                           )
     @app_commands.choices(margen=[
         app_commands.Choice(name="Mes", value="m"),
         app_commands.Choice(name="Trimestre", value="t"),
         app_commands.Choice(name="Año", value="y"),
         app_commands.Choice(name="Todo", value="a"),
-        ])
+        ], 
+                          finalizados=[
+        app_commands.Choice(name="Finalizados", value=1),
+        app_commands.Choice(name="Todos", value=0),]
+                          )
     @commands.has_role(ADMIN_TAG)
-    async def recoger(self, interaction: discord.Interaction, margen: app_commands.Choice[str]):
+    async def recoger(self, 
+                      interaction: discord.Interaction, 
+                      margen: app_commands.Choice[str], 
+                      finalizados: app_commands.Choice[int]
+                      ):
+        '''
+        Recoge los eventos finalizados.
+        
+        Args:
+            margen (str): Margen temporal para recoger los eventos        
+        '''
         await interaction.response.defer()
 
         day = datetime.now()
@@ -735,16 +886,24 @@ class Events(commands.Cog):
         elif margen.value == 'a':
             start_date = date(1992, 1, 1)
         
-        retrieved_events = self.database.find({'timestamp': {'$gt': start_date}, 'status': 'FINALIZED'})
+        query = {'timestamp': {'$gt': start_date}}
+        str_fin = ''
+        if finalizados.value:
+            str_fin = ' finalizados'
+            query = {'status': 'FINALIZED'}
         
-        await interaction.followup.send(content='Los eventos finalizados están en tus mensajes privados...', ephemeral=True)
+        retrieved_events = self.database.find(query)
+        
+        await interaction.followup.send(content=f'Los eventos{str_fin} están en tus mensajes privados...', ephemeral=True)
         
         df_events = pd.DataFrame(retrieved_events)
         csv_data = df_events.to_csv().encode()
         csv_file = io.BytesIO(csv_data)
         discord_file = discord.File(csv_file, filename='eventos.csv')
         
-        await interaction.user.send(content='Eventos finalizados:', file=discord_file)
+        await interaction.user.send(content=f'Eventos{str_fin}:', file=discord_file)
+    
+    
     
     @commands.Cog.listener()
     async def on_message(self, message):
@@ -757,10 +916,10 @@ class Events(commands.Cog):
             if event.dia.date < day:
                 await msg.unpin()
                 await msg.edit(view=None)
-                self._log_event(event, status='FINALIZED', ongoing=False)
+                _log_event(self.database, event, status='FINALIZED', ongoing=False)
             else:
                 await msg.edit(view=EventsButton(database=self.database))
-                self._log_event(event, status='ACTIVE', ongoing=True)
+                _log_event(self.database, event, status='ACTIVE', ongoing=True)
         
         return True
     
