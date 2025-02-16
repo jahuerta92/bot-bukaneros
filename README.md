@@ -1,6 +1,6 @@
-# Bot Bukaneros
+# El Bukabot 
 
-Hice este bot en un finde para aprender python o asi. Si quieres usar el bot instala los requirements.txt y sube un archivo .env con un BETA_TOKEN y un DEPLOY_TOKEN. 
+Este es el bot para gestionar eventos de bukaneros del rol. Sigue las instrucciones para arrancar el bot.
 
 # Instrucciones 
 Para Dockerizar el bot en un servidor nuevo seguir estas instrucciones de uso. (thx rafael anier)
@@ -38,14 +38,22 @@ git clone https://github.com/jahuerta92/bot-bukaneros.git
 ```
 
 ## 6. El .env
-Crear el fichero .env y meter el token
+Crear el fichero .env y meter los secretos.
 ```
 cd bot-bukaneros
-echo "BETA_TOKEN=loquesea" > .env
-echo "DEPLOY_TOKEN=loquesea" >> .env
+echo "BETA_TOKEN=token_desarrollo_discord" > .env
+echo "DEPLOY_TOKEN=token_lanzamiento_discord" >> .env
+echo "MONGO_SECRET=password_mongodb" >> .env
+echo "MONGO_USER=usuario_mongodb" >> .env
 ```
 
 ## 7. Crear el contenedor y arrancarlo.
+Arrancar el servidor así
 ```
 docker compose up -d --build
 ```
+
+# Uso
+El bot tiene el comando `+help` solo para los administradores del servidor (Usuarios 'administrador'). Para poner el bot operativo es nevesario usar el comando `+sync` despues de que el bot entre al servidor.
+
+Además, para consultar el resto de operaciones, los usuarios pueden utilizar el comando `/ayuda`. 

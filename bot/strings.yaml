@@ -1,0 +1,114 @@
+primeros_pasos: |
+  Si eres un *jugador*, para apuntarte a un evento solo tienes que utilizar (`/apuntar id:<tu_id>`), donde la <tu_id> es el identificador del evento, etiquetado siempre en el mensaje anclado.
+  Si eres el *director* tendras que usar (`/crear id:<tu_id> nombre:<tu_nombre>`) donde `<tu_id>` es el identificador que le darás a tu evento y el `<tu_nombre>` que quieres que tenga.
+  Puedes apuntarte a una partida usando el botón de **Apuntarse** en el mensaje anclado.
+  Si quieres ver todos los eventos disponibles usa (`/listar`).
+  
+apuntar: 
+  cmd: |
+    Apuntarse a evento `/apuntar id:<id> [jugador:<jugador>]`
+  txt: |
+    Para apuntarte al evento con **<id>**, puedes apuntar a otra persona si incluyes jugador:<jugador>.
+    Ejemplos:
+    ```
+    /apuntar id:D&D jugador:Alberto
+    /apuntar id:D&D
+    ```
+      
+quitar: 
+  cmd: |
+    Salir de evento `/quitar id:<id> [jugador:<jugador>]`
+  txt: |
+    Para salirte del evento con **<id>**, puedes apuntar a otra persona si incluyes jugador:<jugador>.
+    Ejemplos: 
+    ```
+    /quitar id:D&D jugador:Alberto 
+    /quitar id:D&D
+    ```
+      
+crear: 
+  cmd: |
+    Crear evento `/crear id:<id> nombre:<n> [dia:<d>] [inicio:<i>] [fin:<f>] ... +3`
+      
+  txt: |
+    Crea un evento con una **<id>** y un **<nombre>**. Si tu evento está fuera de los canales diarios indica el dia con dia:<dia>.
+    ¡El resto de argumentos son *opcionales*! Sirven para especificar aspectos del evento `[dia:<dia>], [inicio:<inicio>], [fin:<fin>], [maximo:<maximo>], [notas:<notas>], [tipo:<tipo>]`
+    El argumento **dia** es mañana por omisión.
+    Ejemplos:
+    ```
+    /crear id:D&D nombre:La maldicion dia:Jueves
+    /crear id:D&D nombre:La maldicion dia:Jueves notas:¡Venid antes de las 6 para hacer fichas!
+    ```
+      
+modificar: 
+  cmd: |
+    Modificar evento `/modificar id:<id> [nueva_id:<ni>] [nombre:<n>] [dia:<d>] [inicio:<i>] ...+4`
+      
+  txt: |
+    Modifica al menos un campo de tu evento. 
+    Usa las etiquetas para cambiar `[dia:<dia>], [inicio:<inicio>], [fin:<fin>], [maximo:<maximo>], [notas:<notas>], [tipo:<tipo>], [nueva_id:<nueva_id>], [nombre:<nombre>]`
+    Ejemplos:
+    ```
+    /modificar id:D&D nombre:Piratas nueva_id:Path
+    /modificar id:Path maximo:6 notas:Ahora solo se pueden anotar 6 jugadores
+    ```
+      
+mover:
+  cmd: |
+    Mover jugador `/mover id:<id1> nueva_id:<id2> [jugador:<jugador>]`
+  txt: |
+    Mueve a un jugador (tu mismo si no lo especificas) del evento con **<id1>** al evento con **<id2>**.
+    Ejemplos:
+    ```
+    /mover id:D&D id:Pathfinder
+    /mover id:D&D id:Pathfinder jugador:Alberto
+    ```
+      
+anular: 
+  cmd: |
+      Anular evento `/anular id:<id>`
+  txt: |
+      Anula un evento que tu dirijas.
+      Ejemplos: 
+      ```
+      /anular id:D&D
+      ```
+  
+listar:
+  cmd: |
+    Listado `/listar`
+  txt: |
+    Lista todos los eventos disponibles del servidor.
+    
+ayuda: 
+  cmd: |
+    Ayuda: `/ayuda`
+  txt: |
+    Es lo que estas leyendo, grumete.
+
+recoger: 
+  cmd: |
+    [ADMIN] Recoger todos los eventos `/recoger margen:<margen> todos:<todos>`
+
+  txt: |
+    Recupera todos los eventos del servidor
+    Ejemplos:
+    ```
+    /recoger margen:Mes todos:Finalizados
+    /recoger margen:Trimestre todos:Todos
+    ```
+
+finalizar:
+  cmd: |
+    [ADMIN] Finalizar evento `/finalizar id:<id>`
+
+  txt: |
+    Finaliza un evento del servidor.
+    Ejemplos:
+    ```
+    /finalizar id:D&D
+    ```
+
+intro: |
+  Bienvenido al organizador de eventos de Bukaneros. Soy el panel de ayuda de este bot. 
+  Las indicaciones entre corchetes son opcionales se rellenan automaticamente siempre que pueden.

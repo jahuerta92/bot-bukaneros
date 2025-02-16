@@ -16,7 +16,7 @@ import logging
 ####
 # CONFIG BOT
 ####
-load_dotenv() # Quitar en deploy
+#load_dotenv() # Quitar en deploy
 
 BOT_PREFIX = '+'
 ADMIN_TAG = 'administrador'
@@ -37,9 +37,9 @@ elif args.mode == 'deploy':
 
 MONGO_USER = os.getenv('MONGO_USER')
 MONGO_SECRET = os.getenv('MONGO_SECRET')
-GUILD_ID = os.getenv('GUILD_ID')
-#URI_DATABASE = f"mongodb://{MONGO_USER}:{MONGO_SECRET}@bukadb/Bukaneros?authSource=admin" # Docker
-URI_DATABASE = f"mongodb://{MONGO_USER}:{MONGO_SECRET}@localhost/Bukaneros?authSource=admin" # Local
+
+URI_DATABASE = f"mongodb://{MONGO_USER}:{MONGO_SECRET}@bukadb/Bukaneros?authSource=admin" # Docker
+#URI_DATABASE = f"mongodb://{MONGO_USER}:{MONGO_SECRET}@localhost/Bukaneros?authSource=admin" # Local
 
 ####
 # BOT SETUP
