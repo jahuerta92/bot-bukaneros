@@ -390,7 +390,7 @@ def _log_event(db, event:Evento, status:str='CREATED', ongoing:bool=True) -> Non
 
 def _manage_author(interaction: discord.Interaction, additional_author: str = None) -> str:
     if additional_author is None:
-        author = interaction.user.name
+        author = interaction.user.nick if interaction.user.nick is not None else interaction.user.name
         for role in interaction.user.roles:
             if unidecode(role.name.lower()) == unidecode(POLIZON_TAG.lower()):
                 author = f'{author} (Polizón)'
