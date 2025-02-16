@@ -1,12 +1,12 @@
-from typing import List, Literal, Tuple, Union
+from typing import List, Tuple
 import discord
 import pandas as pd
 import io
-import os
 import asyncio
+import hashlib
 
 from discord.ext import commands
-from discord import Thread, app_commands
+from discord import app_commands
 from unidecode import unidecode
 from copy import copy, deepcopy
 
@@ -34,7 +34,6 @@ class Dia:
     LEGAL_DAYS_SET = set([item for sublist in LEGAL_DAYS for item in sublist])
     
     def __init__(self, fecha=None, *args, **kwargs):
-        self.status = (True, 'Fecha válida')
         # Si no se pasa ningún argumento, se toma la fecha de mañana
         if fecha is None:
             self.date = date.today() + relativedelta(days=1)
@@ -101,9 +100,6 @@ class Dia:
             # Si no se ha podido parsear el string a fecha
             elif not is_date_format:
                 raise ValueError('No se ha podido parsear el string a fecha.')
-            
-            if today > target_date:
-                raise ValueError('La fecha es anterior a hoy.')
             
             self.date = target_date            
             
@@ -350,7 +346,8 @@ class Evento:
         return unidecode(self.id.lower()) == unidecode(id.lower())
     
     def unique_id(self):
-        return str(hash(self.link))
+        # Se devuelve un hash único para el evento
+        return hashlib.sha256(str(self.link).encode()).hexdigest()
 
 
 #########################################################################
@@ -366,10 +363,15 @@ async def _manage_check(interaction, check, msg) -> Tuple[bool, str]:
 
 def _log_event(db, event:Evento, status:str='CREATED', ongoing:bool=True) -> None:
         event_dict = event.to_dict()
+        
+        for key, value in event_dict.items():
+            event_dict[key] = str(value) # Sanitize values
+        
         event_dict['timestamp'] = datetime.now()
         event_dict['unique_id'] = event.unique_id()
         event_dict['status'] = status
         event_dict['ongoing'] = ongoing
+        
         player_list, max_players = Jugadores.from_str(event_dict['jugadores'])
         event_dict['jugadores'] = player_list
         event_dict['numero'] = len(player_list)
@@ -378,13 +380,13 @@ def _log_event(db, event:Evento, status:str='CREATED', ongoing:bool=True) -> Non
         
         check = db.find_one(filter)
         
-        for key, value in event_dict.items():
-            event_dict[key] = str(value) # Sanitize values
         
         if check is None:
             db.insert_one(event_dict)
         else:
             db.update_one(filter, {'$set': event_dict})
+            
+        print(f' <EVENTOS:DATABASE> Evento {event_dict["id"]} registrado con éxito.')
 
 def _manage_author(interaction: discord.Interaction, additional_author: str = None) -> str:
     if additional_author is None:
@@ -479,14 +481,14 @@ class Events(commands.Cog):
         self.database = client.db_client['Bukaneros']['Eventos']
         print(f' <EVENTOS> Conexión establecida.')        
 
-    async def _retrieve_pinned(self, interaction) -> List[Tuple[Evento, discord.Message]]:
-        pinned = await interaction.channel.pins()
+    async def _retrieve_pinned(self, channel: discord.abc.GuildChannel) -> List[Tuple[Evento, discord.Message]]:
+        pinned = await channel.pins()
         events = []
         for message in pinned:
             embed = message.embeds[0]
             if Evento.EVENT_TAG in embed.footer.text:
-                _, event = Evento.create(embed)
-                events.append((event, message))
+                check, event = Evento.create(embed)
+                events.append((check, event, message))
         return events
     
     @commands.Cog.listener()
@@ -588,15 +590,22 @@ class Events(commands.Cog):
                         notas=notas
                     )
         
+           
         await _manage_check(interaction, not check, event)
         
+        today = date.today()
+        
+        await _manage_check(interaction, 
+                            event.dia.date < today, 
+                            'No se puede crear un evento en el pasado.')
+            
         # Check if there are any old events pinned:
-        old_events = await self._retrieve_pinned(interaction)
+        old_events = await self._retrieve_pinned(interaction.channel)
 
         # Check if any of the old events is the same as the new one:
         await _manage_check(interaction, 
-                                 any(event.is_eq(e) for e, _ in old_events), 
-                                 f'Ya existe un evento con id **{id}**.')       
+                            any(event.is_eq(e) for _, e, _ in old_events), 
+                            f'Ya existe un evento con id **{id}**.')       
 
         message = await interaction.channel.send('Creando evento...')           
         event.set_link(message.jump_url)
@@ -627,9 +636,9 @@ class Events(commands.Cog):
         
         author = _manage_author(interaction)
 
-        old_events = await self._retrieve_pinned(interaction)
+        old_events = await self._retrieve_pinned(interaction.channel)
         
-        for event, message in old_events:
+        for ok, event, message in old_events:
             if event.is_eq_id(id):
                 is_admin = any(unidecode(role.name.lower()) == unidecode(ADMIN_TAG.lower()) for role in interaction.user.roles)
                 await _manage_check(interaction, 
@@ -662,9 +671,9 @@ class Events(commands.Cog):
         print(' <EVENTOS> Finalizando evento...')
         
         # NO check for polizon, as it is an admin command
-        old_events = await self._retrieve_pinned(interaction)
+        old_events = await self._retrieve_pinned(interaction.channel)
         
-        for event, message in old_events:
+        for ok, event, message in old_events:
             if event.is_eq_id(id):       
                 await message.unpin()
                 await message.edit(view=None)
@@ -696,9 +705,9 @@ class Events(commands.Cog):
          
         author = _manage_author(interaction, jugador)
             
-        old_events = await self._retrieve_pinned(interaction)
+        old_events = await self._retrieve_pinned(interaction.channel)
             
-        for event, message in old_events:
+        for ok, event, message in old_events:
             if event.is_eq_id(id):
                 check, msg = event.add_player(author)
                 
@@ -733,9 +742,9 @@ class Events(commands.Cog):
                 
             author = _manage_author(interaction, jugador)
                 
-            old_events = await self._retrieve_pinned(interaction)
+            old_events = await self._retrieve_pinned(interaction.channel)
                 
-            for event, message in old_events:
+            for ok, event, message in old_events:
                 if event.is_eq_id(id):
                     check, msg = event.remove_player(author)
                     
@@ -784,9 +793,9 @@ class Events(commands.Cog):
         
         author = _manage_author(interaction)
         
-        old_events = await self._retrieve_pinned(interaction)
+        old_events = await self._retrieve_pinned(interaction.channel)
         
-        for event, message in old_events:
+        for ok, event, message in old_events:
             if event.is_eq_id(id):
                 is_admin = any(unidecode(role.name.lower()) == unidecode(ADMIN_TAG.lower()) for role in interaction.user.roles)
                 await _manage_check(interaction, 
@@ -836,10 +845,10 @@ class Events(commands.Cog):
         
         author = _manage_author(interaction, jugador)
                    
-        old_events = await self._retrieve_pinned(interaction)
+        old_events = await self._retrieve_pinned(interaction.channel)
         
         check_event = False
-        for event, message in old_events:
+        for ok, event, message in old_events:
             if event.is_eq_id(id):                
                 check, msg = event.remove_player(author)
                 
@@ -852,8 +861,10 @@ class Events(commands.Cog):
         
         await _manage_check(interaction, not check_event, f'No se ha encontrado el evento de origen **{id}**.')
         
-        for event, message in old_events:
+        for ok, event, message in old_events:
             if event.id == nueva_id:
+                await _manage_check(interaction, not ok, msg)
+                                
                 check, msg = event.add_player(author)
                 
                 await _manage_check(interaction, not check, msg)
@@ -958,14 +969,16 @@ class Events(commands.Cog):
             start_date = day - relativedelta(months=3)
         elif margen.value == 'y':
             start_date = day - relativedelta(years=1)
-        elif margen.value == 'a':
-            start_date = datetime.combine(date.today(), datetime.min.time())
+            
         
-        query = {'timestamp': {'$gt': start_date}}
+        query = {}
+            
+        if margen.value != 'a':
+            query['timestamp'] = {'$gt': start_date}
         str_fin = ''
         if finalizados.value:
             str_fin = ' finalizados'
-            query = {'status': 'FINALIZED'}
+            query['status'] = 'FINALIZED'
         
         retrieved_events = self.database.find(query)
         
@@ -980,21 +993,24 @@ class Events(commands.Cog):
 
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
+        valid_message = not (message.content.startswith('+') or message.content.startswith('/')) and not message.author.bot
+        
+        if valid_message:
+            day = date.today()
+
+            old_events = await self._retrieve_pinned(message.channel)
+            for _, event, msg in old_events:
+                if event.dia.date < day:
+                    print(f' <EVENTOS> Evento {event.id} ha finalizado.')
+                    await msg.unpin()
+                    await msg.edit(view=None)
+                    _log_event(self.database, event, status='FINALIZED', ongoing=False)
+                else:
+                    print(f' <EVENTOS> Evento {event.id} sigue en curso.')
+                    await msg.edit(view=EventsButton(database=self.database))
+                    _log_event(self.database, event, status='ACTIVE', ongoing=True)
+        
         await asyncio.sleep(20)
-        
-        day = date.today()
-        
-        old_events = await self._retrieve_pinned(message)
-        for event, msg in old_events:
-            if event.dia.date < day:
-                await msg.unpin()
-                await msg.edit(view=None)
-                _log_event(self.database, event, status='FINALIZED', ongoing=False)
-            else:
-                await msg.edit(view=EventsButton(database=self.database))
-                _log_event(self.database, event, status='ACTIVE', ongoing=True)
-        
-        return True
     
 async def setup(client):
     await client.add_cog(Events(client))

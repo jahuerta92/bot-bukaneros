@@ -1,7 +1,7 @@
 primeros_pasos: |
   Si eres un *jugador*, para apuntarte a un evento solo tienes que utilizar (`/apuntar id:<tu_id>`), donde la <tu_id> es el identificador del evento, etiquetado siempre en el mensaje anclado.
-  Si eres el *director* tendras que usar (`/crear id:<tu_id> nombre:<tu_nombre>`) donde `<tu_id>` es el identificador que le darás a tu evento y el `<tu_nombre>` que quieres que tenga.
-  Puedes apuntarte a una partida usando el botón de **Apuntarse** en el mensaje anclado.
+  Si eres el *director* tendras que usar (`/crear id:<tu_id> nombre:<tu_nombre>`) donde `<tu_id>` es el identificador que le daras a tu evento y el `<tu_nombre>` que quieres que tenga.
+  Puedes apuntarte a una partida usando el boton de **Apuntarse** en el mensaje anclado.
   Si quieres ver todos los eventos disponibles usa (`/listar`).
   
 apuntar: 
@@ -9,6 +9,7 @@ apuntar:
     Apuntarse a evento `/apuntar id:<id> [jugador:<jugador>]`
   txt: |
     Para apuntarte al evento con **<id>**, puedes apuntar a otra persona si incluyes jugador:<jugador>.
+    Si no indicas jugador, te apuntaras a ti mismo. Misma funcionalidad que el boton de **Apuntarse**.
     Ejemplos:
     ```
     /apuntar id:D&D jugador:Alberto
@@ -20,6 +21,7 @@ quitar:
     Salir de evento `/quitar id:<id> [jugador:<jugador>]`
   txt: |
     Para salirte del evento con **<id>**, puedes apuntar a otra persona si incluyes jugador:<jugador>.
+    Si no indicas jugador, te desapuntaras a ti mismo. Misma funcionalidad que el boton de **Quitarse**.
     Ejemplos: 
     ```
     /quitar id:D&D jugador:Alberto 
@@ -31,9 +33,11 @@ crear:
     Crear evento `/crear id:<id> nombre:<n> [dia:<d>] [inicio:<i>] [fin:<f>] ... +3`
       
   txt: |
-    Crea un evento con una **<id>** y un **<nombre>**. Si tu evento está fuera de los canales diarios indica el dia con dia:<dia>.
+    Crea un evento con una **<id>** y un **<nombre>**. Si tu evento esta fuera de los canales diarios indica el dia con dia:<dia>.
     ¡El resto de argumentos son *opcionales*! Sirven para especificar aspectos del evento `[dia:<dia>], [inicio:<inicio>], [fin:<fin>], [maximo:<maximo>], [notas:<notas>], [tipo:<tipo>]`
-    El argumento **dia** es mañana por omisión.
+    El argumento **dia** es mañana por omision. Dia admite casi cualquier formato de fecha, incluyendo 'L, M, X, J, V, S, D' para elegir el siguiente dia de la semana.
+    El argumento **inicio** y **fin** son horas en formato HH:MM, por ejemplo 17 equivale a las 17:00.
+    El argumento **tipo** es, por defecto, 'Partida de rol'.
     Ejemplos:
     ```
     /crear id:D&D nombre:La maldicion dia:Jueves
@@ -66,9 +70,9 @@ mover:
       
 anular: 
   cmd: |
-      Anular evento `/anular id:<id>`
+      Anular evento que diriges `/anular id:<id>`
   txt: |
-      Anula un evento que tu dirijas.
+      Anula un evento que tu dirijas. Misma funcionalidad que el boton de **Quitarse**.
       Ejemplos: 
       ```
       /anular id:D&D
@@ -91,7 +95,7 @@ recoger:
     [ADMIN] Recoger todos los eventos `/recoger margen:<margen> todos:<todos>`
 
   txt: |
-    Recupera todos los eventos del servidor
+    Recupera todos los eventos del servidor dado un margen en el que fueron creados. Puedes elegir si recoger todo o solo los finalizados.
     Ejemplos:
     ```
     /recoger margen:Mes todos:Finalizados
