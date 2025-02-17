@@ -485,10 +485,12 @@ class Events(commands.Cog):
         pinned = await channel.pins()
         events = []
         for message in pinned:
-            embed = message.embeds[0]
-            if Evento.EVENT_TAG in embed.footer.text:
-                check, event = Evento.create(embed)
-                events.append((check, event, message))
+            embeds = message.embeds
+            if len(embeds) == 1:
+                embed = embeds[0]
+                if Evento.EVENT_TAG in embed.footer.text:
+                    check, event = Evento.create(embed)
+                    events.append((check, event, message))
         return events
     
     @commands.Cog.listener()
