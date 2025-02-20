@@ -233,7 +233,7 @@ class Evento:
                  *args,
                  **kwargs):
         
-        self.tipo = tipo if tipo is not None else 'Partida de rol' 
+        self.tipo = tipo if tipo is not None else 'Partida de rol (Presencial)' 
         self.id = id
         self.nombre = nombre
         
@@ -406,7 +406,7 @@ def _manage_author(interaction: discord.Interaction, additional_author: str = No
 
 class EventsButton(discord.ui.View):
     def __init__(self, *, database, timeout=None):
-        super().__init__(timeout=timeout or 180)
+        super().__init__(timeout=timeout)
         self.database = database
             
     @discord.ui.button(label="Apuntarme", style=discord.ButtonStyle.success, emoji="✔️")
@@ -475,6 +475,8 @@ class Events(commands.Cog):
     with open('strings.yaml', 'r') as stream:
         HELP_DICT = yaml.safe_load(stream)
 
+    
+    
     def __init__(self, client):
         self.client = client
         print(f' <EVENTOS> Conectando a la base de datos...')
@@ -552,6 +554,13 @@ class Events(commands.Cog):
     @app_commands.command(name='crear',
                           description=HELP_DICT['crear']['cmd'],
                           )
+    @app_commands.choices(tipo=[
+        app_commands.Choice(name="Partida de rol (Presencial)", value="Partida de rol (Presencial)"),
+        app_commands.Choice(name="Partida de rol (Online)", value="Partida de rol (Online)"),
+        app_commands.Choice(name="Juegos de mesa", value="Juegos de mesa"),
+        app_commands.Choice(name="Miniaturas", value="Miniaturas"),
+        app_commands.Choice(name="Otros", value="Otros"),
+        ])       
     async def crear(self, 
                     interaction: discord.Interaction,
                     id: str,
@@ -561,7 +570,7 @@ class Events(commands.Cog):
                     fin: str = None,
                     maximo: int = None,
                     notas: str = None,
-                    tipo: str = None,
+                    tipo: app_commands.Choice[str] = None,
                     ):
         '''
         Crea un evento para dirigir.
@@ -581,7 +590,7 @@ class Events(commands.Cog):
         print(' <EVENTOS> Creando evento...')
         author = _manage_author(interaction)            
         check, event = Evento.create(
-                        tipo=tipo,
+                        tipo=tipo if tipo is None else tipo.value,
                         id=id,
                         nombre=nombre,
                         dia=dia,
@@ -763,6 +772,13 @@ class Events(commands.Cog):
     @app_commands.command(name='modificar',
                             description=HELP_DICT['modificar']['cmd'],
                             )
+    @app_commands.choices(tipo=[
+        app_commands.Choice(name="Partida de rol (Presencial)", value="Partida de rol (Presencial)"),
+        app_commands.Choice(name="Partida de rol (Online)", value="Partida de rol (Online)"),
+        app_commands.Choice(name="Juegos de mesa", value="Juegos de mesa"),
+        app_commands.Choice(name="Miniaturas", value="Miniaturas"),
+        app_commands.Choice(name="Otros", value="Otros"),
+        ])       
     async def modificar(self,
                         interaction: discord.Interaction,
                         id: str,
@@ -773,7 +789,7 @@ class Events(commands.Cog):
                         fin: str = None,
                         maximo: int = None,
                         notas: str = None,
-                        tipo: str = None,
+                        tipo: app_commands.Choice[str] = None,
                         ):
         '''
         Modifica un evento que diriges.
@@ -812,7 +828,8 @@ class Events(commands.Cog):
                                        fin=fin, 
                                        maximo=maximo, 
                                        notas=notas, 
-                                       tipo=tipo)
+                                       tipo=tipo if tipo is None else tipo.value,
+                                       )
                 except Exception as e:
                     await interaction.followup.send(content=f'Error al modificar la evento: {e}', ephemeral=True)
                     return
@@ -959,19 +976,20 @@ class Events(commands.Cog):
         Recoge los eventos finalizados.
         
         Args:
-            margen (str): Margen temporal para recoger los eventos
+            margen (str): Margen temporal para recoger los eventos. Todo el periodo en margen, hasta el primer dia del mes/año
             finalizados (int): Si se recogen los eventos finalizados o todos.        
         '''
         await interaction.response.defer(ephemeral=True)
 
         day = datetime.now()
+        first_day = day.replace(day=1)
+        first_month = day.replace(day=1, month=1)
         if margen.value == 'm':
-            start_date = day - relativedelta(months=1)
+            start_date = first_day - relativedelta(months=1)
         elif margen.value == 't':
-            start_date = day - relativedelta(months=3)
+            start_date = first_day - relativedelta(months=3)
         elif margen.value == 'y':
-            start_date = day - relativedelta(years=1)
-            
+            start_date = first_month - relativedelta(years=1)
         
         query = {}
             
