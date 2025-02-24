@@ -4,6 +4,7 @@ import pandas as pd
 import io
 import asyncio
 import hashlib
+import re
 
 from discord.ext import commands
 from discord import app_commands
@@ -147,21 +148,23 @@ class Hora:
 #########################################################################
 
 class Jugadores:
+    
     def __init__(self, players = None, maximo = None, *args, **kwargs):
         
         self.maximo = maximo
         
+
         if players is None:
             self.players = []
         
         elif isinstance(players, str):
-            p, m = players.split('-')
-            clean = p.split('*')
+            player_finder = re.compile(r'\*\s+`(.*)`\n')
+            p, m = players.split('🧑‍🤝‍🧑 ')
+            clean = player_finder.findall(p)
             
             _, str_max = m.split('/')
             self.maximo = int(str_max)
             
-
             self.players = [x.strip() for x in clean]
 
         elif isinstance(players, players):
@@ -179,8 +182,9 @@ class Jugadores:
 
     @staticmethod
     def from_str(players):
-        p, m = players.split('-')
-        clean = p.split('*')
+        player_finder = re.compile(r'\*\s+`(.*)`\n')
+        p, m = players.split('🧑‍🤝‍🧑 ')
+        clean = player_finder.findall(p)
         _, str_max = m.split('/')
         maximo = int(str_max)
         
@@ -208,9 +212,11 @@ class Jugadores:
     
     def __str__(self):
         
-        players = '\n* '.join(self.players)
+        player_str = ''
+        for player in self.players:
+            player_str += f'* `{player}`\n'
         n_players = len(self.players)
-        return f'* {players}\n- {n_players}/{self.maximo}'
+        return f'{player_str}\n🧑‍🤝‍🧑 {n_players}/{self.maximo}'
 
 #########################################################################
 # EVENTO CLASS                                                          #
@@ -337,7 +343,11 @@ class Evento:
     
     def summarize(self):
         # Se devuelve una cadena con los campos del evento
-        return f'{self.tipo} \n **{self.nombre}** el dia **{self.dia}** de **{self.inicio}** a **{self.fin}**\n'
+        if len(self.jugadores.players) > 0:
+            participantes_str = f'Participan:\n{str(self.jugadores)}'
+        else:
+            participantes_str = 'No hay participantes todavía.'
+        return f'```{self.tipo} \n {self.director} dirige {self.nombre} el dia {self.dia} de {self.inicio} a {self.fin}\n{participantes_str}```'
     
     def is_eq(self, evento):
         return unidecode(self.id.lower()) == unidecode(evento.id.lower())
