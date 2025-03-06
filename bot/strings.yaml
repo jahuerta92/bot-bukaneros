@@ -6,24 +6,27 @@ primeros_pasos: |
   
 apuntar: 
   cmd: |
-    Apuntarse a evento `/apuntar id:<id> [jugador:<jugador>]`
+    Apuntarse a evento `/apuntar id:<id> [jugador:<jugador>] [es_invitado:<es_invitado>]`
   txt: |
     Para apuntarte al evento con **<id>**, puedes apuntar a otra persona si incluyes jugador:<jugador>.
     Si no indicas jugador, te apuntaras a ti mismo. Misma funcionalidad que el boton de **Apuntarse**.
+    Si quieres invitar a alguien fuera de la asociacion, añade es_invitado:1, es_invitado:2...
     Ejemplos:
     ```
+    /quitar id:D&D jugador:Alberto es_invitado:True
     /apuntar id:D&D jugador:Alberto
     /apuntar id:D&D
     ```
       
 quitar: 
   cmd: |
-    Salir de evento `/quitar id:<id> [jugador:<jugador>]`
+    Salir de evento `/quitar id:<id> [jugador:<jugador>] [es_invitado:<es_invitado>]`
   txt: |
     Para salirte del evento con **<id>**, puedes apuntar a otra persona si incluyes jugador:<jugador>.
     Si no indicas jugador, te desapuntaras a ti mismo. Misma funcionalidad que el boton de **Quitarse**.
     Ejemplos: 
     ```
+    /quitar id:D&D jugador:Alberto es_invitado:True
     /quitar id:D&D jugador:Alberto 
     /quitar id:D&D
     ```
@@ -50,7 +53,7 @@ modificar:
       
   txt: |
     Modifica al menos un campo de tu evento. 
-    Usa las etiquetas para cambiar `[dia:<dia>], [inicio:<inicio>], [fin:<fin>], [maximo:<maximo>], [notas:<notas>], [tipo:<tipo>], [nueva_id:<nueva_id>], [nombre:<nombre>]`
+    Usa las etiquetas para cambiar `[dia:<dia>], [inicio:<inicio>], [fin:<fin>], [director:<director>], [maximo:<maximo>], [notas:<notas>], [tipo:<tipo>], [nueva_id:<nueva_id>], [nombre:<nombre>]`
     Ejemplos:
     ```
     /modificar id:D&D nombre:Piratas nueva_id:Path
@@ -59,7 +62,7 @@ modificar:
       
 mover:
   cmd: |
-    Mover jugador `/mover id:<id1> nueva_id:<id2> [jugador:<jugador>]`
+    Mover jugador `/mover id:<id1> nueva_id:<id2> [jugador:<jugador>] [es_invitado:<es_invitado>]`
   txt: |
     Mueve a un jugador (tu mismo si no lo especificas) del evento con **<id1>** al evento con **<id2>**.
     Ejemplos:

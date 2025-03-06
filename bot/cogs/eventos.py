@@ -1,4 +1,4 @@
-from typing import List, Tuple
+from typing import List, Literal, NamedTuple, Optional, Tuple, Union
 import discord
 import pandas as pd
 import io
@@ -398,16 +398,14 @@ def _log_event(db, event:Evento, status:str='CREATED', ongoing:bool=True) -> Non
             
         print(f' <EVENTOS:DATABASE> Evento {event_dict["id"]} registrado con éxito.')
 
-def _manage_author(interaction: discord.Interaction, additional_author: str = None) -> str:
-    if additional_author is None:
-        author = interaction.user.nick if interaction.user.nick is not None else interaction.user.name
-        for role in interaction.user.roles:
-            if unidecode(role.name.lower()) == unidecode(POLIZON_TAG.lower()):
-                author = f'{author} (Polizón)'
-        
-    else:
-        author = additional_author
-    
+def _manage_author(user: Union[discord.User, discord.Member, str], is_invited = 0) -> str:  
+    author = user.nick if user.nick is not None else user.name
+    for role in user.roles:
+        if unidecode(role.name.lower()) == unidecode(POLIZON_TAG.lower()):
+            author = f'{author} (Polizón)'
+            break
+    if is_invited > 0:
+        author = f'Invitado {is_invited} de {author}'
     return author
         
 #########################################################################
@@ -423,7 +421,7 @@ class EventsButton(discord.ui.View):
     async def apuntar_boton(self, interaction: discord.Interaction, button: discord.ui.Button):
         await interaction.response.defer(ephemeral=True)
         
-        author = _manage_author(interaction)
+        author = _manage_author(interaction.user)
         
         message = interaction.message
         check, event = Evento.create(message.embeds[0])
@@ -442,7 +440,7 @@ class EventsButton(discord.ui.View):
     async def quitar_boton(self, interaction: discord.Interaction, button: discord.ui.Button):
         await interaction.response.defer(ephemeral=True)
         
-        author = _manage_author(interaction)
+        author = _manage_author(interaction.user)
         
         message = interaction.message
         check, event = Evento.create(message.embeds[0])
@@ -461,7 +459,7 @@ class EventsButton(discord.ui.View):
     async def anular_boton(self, interaction: discord.Interaction, button: discord.ui.Button):
         await interaction.response.defer(ephemeral=True)
         
-        author = _manage_author(interaction)
+        author = _manage_author(interaction.user)
 
         message = interaction.message
         check, event = Evento.create(message.embeds[0])
@@ -477,6 +475,7 @@ class EventsButton(discord.ui.View):
         await interaction.followup.send(content=f'Evento **{event.id}** anulado con éxito.', ephemeral=True)
         _log_event(self.database, event, status='CANCELLED', ongoing=False)
 
+
 #########################################################################
 # COG                                                               #
 #########################################################################
@@ -485,15 +484,13 @@ class Events(commands.Cog):
     with open('strings.yaml', 'r') as stream:
         HELP_DICT = yaml.safe_load(stream)
 
-    
-    
     def __init__(self, client):
         self.client = client
         print(f' <EVENTOS> Conectando a la base de datos...')
         self.database = client.db_client['Bukaneros']['Eventos']
         print(f' <EVENTOS> Conexión establecida.')        
 
-    async def _retrieve_pinned(self, channel: discord.abc.GuildChannel) -> List[Tuple[Evento, discord.Message]]:
+    async def _retrieve_pinned(self, channel: discord.abc.GuildChannel) -> List[Tuple[bool, Evento, discord.Message]]:
         pinned = await channel.pins()
         events = []
         for message in pinned:
@@ -508,7 +505,7 @@ class Events(commands.Cog):
     @commands.Cog.listener()
     async def on_ready(self):
         print(' [Eventos] cog loaded.')
-    
+
     @app_commands.command(name='ayuda',
                           description=HELP_DICT['ayuda']['cmd'],
                           )
@@ -559,18 +556,11 @@ class Events(commands.Cog):
                                 inline=False)
         
         await interaction.user.send(embed=embed)
-        await interaction.followup.send(content='¡Ayuda bukanera mandada!', ephemeral=True)
+        await interaction.followup.send(content='¡Ayuda bukanera mandada!', ephemeral=True)  
     
     @app_commands.command(name='crear',
                           description=HELP_DICT['crear']['cmd'],
                           )
-    @app_commands.choices(tipo=[
-        app_commands.Choice(name="Partida de rol (Presencial)", value="Partida de rol (Presencial)"),
-        app_commands.Choice(name="Partida de rol (Online)", value="Partida de rol (Online)"),
-        app_commands.Choice(name="Juegos de mesa", value="Juegos de mesa"),
-        app_commands.Choice(name="Miniaturas", value="Miniaturas"),
-        app_commands.Choice(name="Otros", value="Otros"),
-        ])       
     async def crear(self, 
                     interaction: discord.Interaction,
                     id: str,
@@ -578,9 +568,9 @@ class Events(commands.Cog):
                     dia: str = None,
                     inicio: str = None,
                     fin: str = None,
-                    maximo: int = None,
+                    maximo: app_commands.Range[int, 0, None] = None,
                     notas: str = None,
-                    tipo: app_commands.Choice[str] = None,
+                    tipo: Literal["Partida de rol (Presencial)", "Partida de rol (Online)", "Juegos de mesa", "Miniaturas", "Otros"] = None,
                     ):
         '''
         Crea un evento para dirigir.
@@ -598,9 +588,9 @@ class Events(commands.Cog):
         '''
         await interaction.response.defer(ephemeral=True)
         print(' <EVENTOS> Creando evento...')
-        author = _manage_author(interaction)            
+        author = _manage_author(interaction.user)            
         check, event = Evento.create(
-                        tipo=tipo if tipo is None else tipo.value,
+                        tipo=tipo,
                         id=id,
                         nombre=nombre,
                         dia=dia,
@@ -627,18 +617,18 @@ class Events(commands.Cog):
         await _manage_check(interaction, 
                             any(event.is_eq(e) for _, e, _ in old_events), 
                             f'Ya existe un evento con id **{id}**.')       
-
-        message = await interaction.channel.send('Creando evento...')           
+        
+        message = await interaction.channel.send(content=event.summarize(),
+                                                 embed=event.to_embed(interaction),
+                                                 )
         event.set_link(message.jump_url)
-        await message.edit(content=event.summarize(), 
-                           embed=event.to_embed(interaction), 
-                           view=EventsButton(database=self.database))
+        await message.edit(embed=event.to_embed(interaction), view=EventsButton(database=self.database))
         await message.pin()
         
         await interaction.followup.send(content=f'Evento **{event.id}** creado con éxito.\n **Link**: {event.link}', ephemeral=True)
         _log_event(self.database, event, status='CREATED', ongoing=True)   
         print(' <EVENTOS> Evento creado con exito...')
-
+    
     @app_commands.command(name='anular',
                           description=HELP_DICT['anular']['cmd'],
                           )
@@ -655,7 +645,7 @@ class Events(commands.Cog):
         await interaction.response.defer(ephemeral=True)
         print(' <EVENTOS> Anulando evento...')
         
-        author = _manage_author(interaction)
+        author = _manage_author(interaction.user)
 
         old_events = await self._retrieve_pinned(interaction.channel)
         
@@ -673,7 +663,7 @@ class Events(commands.Cog):
                 return 
         
         await interaction.followup.send(content=f'No se ha encontrado la evento **{id}**.', ephemeral=True)
-
+    
     @app_commands.command(name='finalizar',
                           description=HELP_DICT['finalizar']['cmd'],
                           )
@@ -711,7 +701,8 @@ class Events(commands.Cog):
     async def apuntar(self,
                       interaction: discord.Interaction,
                       id: str,
-                      jugador: str = None,   
+                      jugador: discord.Member = None,
+                      es_invitado: app_commands.Range[int, 0, None] = 0,   
                       ):
         '''
         Apuntate a un evento.
@@ -719,13 +710,15 @@ class Events(commands.Cog):
         Args:
             id (str): Identificador del evento.
             jugador (str): Nombre del jugador a apuntar.
+            es_invitado (bool): Indica si el jugador es un invitado del que lanza el comando.
         '''
           
         await interaction.response.defer(ephemeral=True)
         print(' <EVENTOS> Apuntando al evento...')
-         
-        author = _manage_author(interaction, jugador)
-            
+        
+        if jugador is None: author = _manage_author(interaction.user, es_invitado)
+        else: author = _manage_author(jugador, es_invitado)    
+        
         old_events = await self._retrieve_pinned(interaction.channel)
             
         for ok, event, message in old_events:
@@ -749,57 +742,53 @@ class Events(commands.Cog):
     async def quitar(self,
                      interaction: discord.Interaction,
                      id: str,
-                     jugador: str = None,
+                     jugador: discord.Member = None,
+                     es_invitado: app_commands.Range[int, 0, None] = 0,
                      ):
-            '''
-            Desapuntate de un evento.
+        '''
+        Desapuntate de un evento.
+        
+        Args:
+            id (str): Identificador del evento.
+            jugador (str): Nombre del jugador a desapuntar.
+        '''
+        await interaction.response.defer(ephemeral=True)
+        print(' <EVENTOS> Quitando de la evento...')
             
-            Args:
-                id (str): Identificador del evento.
-                jugador (str): Nombre del jugador a desapuntar.
-            '''
-            await interaction.response.defer(ephemeral=True)
-            print(' <EVENTOS> Quitando de la evento...')
+        if jugador is None: author = _manage_author(interaction.user, es_invitado)
+        else: author = _manage_author(jugador, es_invitado)    
+            
+        old_events = await self._retrieve_pinned(interaction.channel)
+            
+        for ok, event, message in old_events:
+            if event.is_eq_id(id):
+                check, msg = event.remove_player(author)
                 
-            author = _manage_author(interaction, jugador)
-                
-            old_events = await self._retrieve_pinned(interaction.channel)
-                
-            for ok, event, message in old_events:
-                if event.is_eq_id(id):
-                    check, msg = event.remove_player(author)
+                await _manage_check(interaction, not check, msg)
                     
-                    await _manage_check(interaction, not check, msg)
-                        
-                    await message.edit(content=event.summarize(), embed=event.to_embed(interaction))
-                    await interaction.followup.send(content=f'{author} ha salido de **{id}**.', ephemeral=True)
-                    _log_event(self.database, event, status='ACTIVE', ongoing=True)   
-                    print(' <EVENTOS> Quitado con exito')
-                    return 
-                
-            await interaction.followup.send(content=f'No se ha encontrado el evento **{id}**.', ephemeral=True)
+                await message.edit(content=event.summarize(), embed=event.to_embed(interaction))
+                await interaction.followup.send(content=f'{author} ha salido de **{id}**.', ephemeral=True)
+                _log_event(self.database, event, status='ACTIVE', ongoing=True)   
+                print(' <EVENTOS> Quitado con exito')
+                return 
+            
+        await interaction.followup.send(content=f'No se ha encontrado el evento **{id}**.', ephemeral=True)
 
     @app_commands.command(name='modificar',
                             description=HELP_DICT['modificar']['cmd'],
                             )
-    @app_commands.choices(tipo=[
-        app_commands.Choice(name="Partida de rol (Presencial)", value="Partida de rol (Presencial)"),
-        app_commands.Choice(name="Partida de rol (Online)", value="Partida de rol (Online)"),
-        app_commands.Choice(name="Juegos de mesa", value="Juegos de mesa"),
-        app_commands.Choice(name="Miniaturas", value="Miniaturas"),
-        app_commands.Choice(name="Otros", value="Otros"),
-        ])       
     async def modificar(self,
                         interaction: discord.Interaction,
                         id: str,
+                        director: discord.Member = None,
                         nueva_id: str = None,
                         nombre: str = None,
                         dia: str = None,
                         inicio: str = None,
                         fin: str = None,
-                        maximo: int = None,
+                        maximo: app_commands.Range[int, 0, None] = None,
                         notas: str = None,
-                        tipo: app_commands.Choice[str] = None,
+                        tipo: Literal["Partida de rol (Presencial)", "Partida de rol (Online)", "Juegos de mesa", "Miniaturas", "Otros"] = None,
                         ):
         '''
         Modifica un evento que diriges.
@@ -819,7 +808,8 @@ class Events(commands.Cog):
         await interaction.response.defer(ephemeral=True)
         print(' <EVENTOS> Modificando evento...')
         
-        author = _manage_author(interaction)
+        author = _manage_author(interaction.user)
+        other_director = None if director is None else _manage_author(director)
         
         old_events = await self._retrieve_pinned(interaction.channel)
         
@@ -831,14 +821,15 @@ class Events(commands.Cog):
                                     f'No eres el director del evento **{event.id}**.')        
                 
                 try:
-                    event.update_field(id=nueva_id, 
+                    event.update_field(id=nueva_id,
+                                       director=other_director if other_director is not None else author, 
                                        nombre=nombre, 
                                        dia=dia, 
                                        inicio=inicio, 
                                        fin=fin, 
                                        maximo=maximo, 
                                        notas=notas, 
-                                       tipo=tipo if tipo is None else tipo.value,
+                                       tipo=tipo,
                                        )
                 except Exception as e:
                     await interaction.followup.send(content=f'Error al modificar la evento: {e}', ephemeral=True)
@@ -859,7 +850,8 @@ class Events(commands.Cog):
                     interaction: discord.Interaction,
                     id: str,
                     nueva_id: str,
-                    jugador: str = None,
+                    jugador: discord.Member = None,
+                    es_invitado: app_commands.Range[int, 0, None] = 0,
                     ):
         '''
         Mueve un jugador a otro evento.
@@ -867,13 +859,15 @@ class Events(commands.Cog):
         Args:
             id (str): Identificador del evento de origen.
             nueva_id (str): Identificador del evento de destino.
-            jugador (str): Nombre del jugador a mover.        
+            jugador (str): Nombre del jugador a mover.       
+            es_invitado (bool): Indica si el jugador es un invitado del que lanza el comando. 
         '''
         await interaction.response.defer(ephemeral=True)
         print(' <EVENTOS> Moviendo jugador...')
         
-        author = _manage_author(interaction, jugador)
-                   
+        if jugador is None: author = _manage_author(interaction.user, es_invitado)
+        else: author = _manage_author(jugador, es_invitado)    
+        
         old_events = await self._retrieve_pinned(interaction.channel)
         
         check_event = False
@@ -1014,7 +1008,7 @@ class Events(commands.Cog):
         
         await interaction.followup.send(content=f'Los eventos{str_fin} están en tus mensajes privados...', ephemeral=True)
         
-        df_events = pd.DataFrame(retrieved_events)
+        df_events = pd.DataFrame(retrieved_events).explode('jugadores')
         csv_data = df_events.to_csv().encode()
         csv_file = io.BytesIO(csv_data)
         discord_file = discord.File(csv_file, filename='eventos.csv')
