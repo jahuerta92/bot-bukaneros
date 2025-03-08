@@ -1,5 +1,4 @@
 # El Bukabot 
-
 Este es el bot para gestionar eventos de bukaneros del rol. Sigue las instrucciones para arrancar el bot.
 
 # Instrucciones 

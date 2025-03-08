@@ -6,8 +6,10 @@ import asyncio
 import hashlib
 import re
 
-from discord.ext import commands
+from discord.ext import commands, tasks
 from discord import app_commands
+import pymongo
+import pymongo.collection
 from unidecode import unidecode
 from copy import copy, deepcopy
 
@@ -484,7 +486,7 @@ class Events(commands.Cog):
     with open('strings.yaml', 'r') as stream:
         HELP_DICT = yaml.safe_load(stream)
 
-    def __init__(self, client):
+    def __init__(self, client: pymongo.MongoClient):
         self.client = client
         print(f' <EVENTOS> Conectando a la base de datos...')
         self.database = client.db_client['Bukaneros']['Eventos']
@@ -1036,5 +1038,14 @@ class Events(commands.Cog):
         
         await asyncio.sleep(20)
     
+    @tasks.loop(minutes=60.0) 
+    async def clean_database(self): 
+        day = datetime.now()
+        if day.hour == 0:
+            # Clean the database at midnight
+            query = {'timestamp': {'$lt': day}}
+            self.database.modify_many(query, {'$set': {'ongoing': False, 'status': 'FINALIZED'}})
+            print(' <EVENTOS> Base de datos limpiada.')
+                
 async def setup(client):
     await client.add_cog(Events(client))
