@@ -620,7 +620,8 @@ class Events(commands.Cog):
                             any(event.is_eq(e) for _, e, _ in old_events), 
                             f'Ya existe un evento con id **{id}**.')       
         
-        message = await interaction.channel.send(content=event.summarize(),
+        contents = f'¡Nuevo evento! @here\n{event.summarize()}'
+        message = await interaction.channel.send(content=contents,
                                                  embed=event.to_embed(interaction),
                                                  )
         event.set_link(message.jump_url)
@@ -628,7 +629,7 @@ class Events(commands.Cog):
         await message.pin()
         
         await interaction.followup.send(content=f'Evento **{event.id}** creado con éxito.\n **Link**: {event.link}', ephemeral=True)
-        _log_event(self.database, event, status='CREATED', ongoing=True)   
+        _log_event(self.database, event, status='ACTIVE', ongoing=True)   
         print(' <EVENTOS> Evento creado con exito...')
     
     @app_commands.command(name='anular',
@@ -1026,7 +1027,7 @@ class Events(commands.Cog):
 
             old_events = await self._retrieve_pinned(message.channel)
             for _, event, msg in old_events:
-                if event.dia.date < day:
+                if event.dia.date < day - relativedelta(days=1):
                     print(f' <EVENTOS> Evento {event.id} ha finalizado.')
                     await msg.unpin()
                     await msg.edit(view=None)
@@ -1043,8 +1044,12 @@ class Events(commands.Cog):
         day = datetime.now()
         if day.hour == 0:
             # Clean the database at midnight
-            query = {'timestamp': {'$lt': day}}
-            self.database.modify_many(query, {'$set': {'ongoing': False, 'status': 'FINALIZED'}})
+            query = {'timestamp': {'$lt': day}, 'status': 'ACTIVE'}
+            self.database.update_many(query, {'$set': {'ongoing': False}})
+            
+            query = {'timestamp': {'$lt': day - relativedelta(days=1)}, 'status': 'ACTIVE'}
+            self.database.update_many(query, {'$set': {'status': 'FINALIZED'}})
+
             print(' <EVENTOS> Base de datos limpiada.')
                 
 async def setup(client):
