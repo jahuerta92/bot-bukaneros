@@ -1027,6 +1027,9 @@ class Events(commands.Cog):
 
             old_events = await self._retrieve_pinned(message.channel)
             for _, event, msg in old_events:
+                if event.dia.date < day:
+                    print(f' <EVENTOS> Evento {event.id} está en tiempo de descuento.')
+                    _log_event(self.database, event, status='ACTIVE', ongoing=False)
                 if event.dia.date < day - relativedelta(days=1):
                     print(f' <EVENTOS> Evento {event.id} ha finalizado.')
                     await msg.unpin()
