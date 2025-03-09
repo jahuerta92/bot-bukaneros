@@ -373,17 +373,17 @@ async def _manage_check(interaction, check, msg) -> Tuple[bool, str]:
     assert not check, f' <EVENTOS> Error..., {msg}'
 
 
-def _log_event(db, event:Evento, status:str='ACTIVE', ongoing:bool=True) -> None:
+def _log_event(db, event:Evento, status:str='ACTIVE', ongoing:bool=False) -> None:
         event_dict = event.to_dict()
         
         for key, value in event_dict.items():
             event_dict[key] = str(value) # Sanitize values
-        
+        today = date.today()
         event_dict['timestamp'] = datetime.combine(Dia(event_dict['dia']).date, datetime.min.time())
         event_dict['last_updated'] = datetime.now()
         event_dict['unique_id'] = event.unique_id()
         event_dict['status'] = status
-        event_dict['ongoing'] = ongoing
+        event_dict['ongoing'] = today >= Dia(event_dict['dia']).date and ongoing
         
         player_list, max_players = Jugadores.from_str(event_dict['jugadores'])
         event_dict['jugadores'] = player_list
@@ -1028,9 +1028,6 @@ class Events(commands.Cog):
 
             old_events = await self._retrieve_pinned(message.channel)
             for _, event, msg in old_events:
-                if event.dia.date < day:
-                    print(f' <EVENTOS> Evento {event.id} está en tiempo de descuento.')
-                    _log_event(self.database, event, status='ACTIVE', ongoing=False)
                 if event.dia.date < day - relativedelta(days=1):
                     print(f' <EVENTOS> Evento {event.id} ha finalizado.')
                     await msg.unpin()
