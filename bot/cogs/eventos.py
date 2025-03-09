@@ -383,7 +383,7 @@ def _log_event(db, event:Evento, status:str='ACTIVE', ongoing:bool=False) -> Non
         event_dict['last_updated'] = datetime.now()
         event_dict['unique_id'] = event.unique_id()
         event_dict['status'] = status
-        event_dict['ongoing'] = today >= Dia(event_dict['dia']).date and ongoing
+        event_dict['ongoing'] = today <= Dia(event_dict['dia']).date and ongoing
         
         player_list, max_players = Jugadores.from_str(event_dict['jugadores'])
         event_dict['jugadores'] = player_list
