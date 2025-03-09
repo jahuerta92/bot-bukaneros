@@ -373,13 +373,14 @@ async def _manage_check(interaction, check, msg) -> Tuple[bool, str]:
     assert not check, f' <EVENTOS> Error..., {msg}'
 
 
-def _log_event(db, event:Evento, status:str='CREATED', ongoing:bool=True) -> None:
+def _log_event(db, event:Evento, status:str='ACTIVE', ongoing:bool=True) -> None:
         event_dict = event.to_dict()
         
         for key, value in event_dict.items():
             event_dict[key] = str(value) # Sanitize values
         
-        event_dict['timestamp'] = datetime.now()
+        event_dict['timestamp'] = datetime.combine(Dia(event_dict['dia']).date, datetime.min.time())
+        event_dict['last_updated'] = datetime.now()
         event_dict['unique_id'] = event.unique_id()
         event_dict['status'] = status
         event_dict['ongoing'] = ongoing
@@ -1045,8 +1046,8 @@ class Events(commands.Cog):
     @tasks.loop(minutes=60.0) 
     async def clean_database(self): 
         day = datetime.now()
-        if day.hour == 0:
-            # Clean the database at midnight
+        if day.hour == 4:
+            # Clean the database at 4.AM
             query = {'timestamp': {'$lt': day}, 'status': 'ACTIVE'}
             self.database.update_many(query, {'$set': {'ongoing': False}})
             
