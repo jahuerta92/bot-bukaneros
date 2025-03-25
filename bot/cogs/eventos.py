@@ -573,7 +573,7 @@ class Events(commands.Cog):
                     fin: str = None,
                     maximo: app_commands.Range[int, 0, None] = None,
                     notas: str = None,
-                    tipo: Literal["Partida de rol (Presencial)", "Partida de rol (Online)", "Juegos de mesa", "Miniaturas", "Otros"] = None,
+                    tipo: Literal["Partida de rol (Presencial)", "Partida de rol (Online)", "Juegos de mesa", "Miniaturas", "EIViva", "Otros"] = None,
                     ):
         '''
         Crea un evento para dirigir.
@@ -792,7 +792,7 @@ class Events(commands.Cog):
                         fin: str = None,
                         maximo: app_commands.Range[int, 0, None] = None,
                         notas: str = None,
-                        tipo: Literal["Partida de rol (Presencial)", "Partida de rol (Online)", "Juegos de mesa", "Miniaturas", "Otros"] = None,
+                        tipo: Literal["Partida de rol (Presencial)", "Partida de rol (Online)", "Juegos de mesa", "Miniaturas", "EIViva", "Otros"] = None,
                         ):
         '''
         Modifica un evento que diriges.
