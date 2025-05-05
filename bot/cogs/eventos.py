@@ -510,7 +510,7 @@ class Events(commands.Cog):
         embed = event.to_embed(interaction)
         if len(content) == 0 and len(embed) == 0:
             await message.edit()
-        if len(content) == 0 and len(embed) > 0:
+        elif len(content) == 0 and len(embed) > 0:
             await message.edit(embed=embed)
         elif len(content) > 0 and len(embed) == 0:
             await message.edit(content=content)
