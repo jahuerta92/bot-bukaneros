@@ -500,10 +500,24 @@ class Events(commands.Cog):
             embeds = message.embeds
             if len(embeds) == 1:
                 embed = embeds[0]
-                if Evento.EVENT_TAG in embed.footer.text:
+                if (embed.footer.text is not None) and (Evento.EVENT_TAG in embed.footer.text):
                     check, event = Evento.create(embed)
                     events.append((check, event, message))
         return events
+    
+    async def _safe_edit(self, event: Evento, message: discord.Message, interaction: discord.Interaction):
+        content = event.summarize()
+        embed = event.to_embed(interaction)
+        if len(content) == 0 and len(embed) == 0:
+            await message.edit()
+        if len(content) == 0 and len(embed) > 0:
+            await message.edit(embed=embed)
+        elif len(content) > 0 and len(embed) == 0:
+            await message.edit(content=content)
+        else:
+            await message.edit(content=content, embed=embed)
+        await message.edit(content=event.summarize(), embed=event.to_embed(interaction))
+    
     
     @commands.Cog.listener()
     async def on_ready(self):
@@ -626,7 +640,8 @@ class Events(commands.Cog):
                                                  embed=event.to_embed(interaction),
                                                  )
         event.set_link(message.jump_url)
-        await message.edit(embed=event.to_embed(interaction), view=EventsButton(database=self.database))
+        await self._safe_edit(event, message, interaction)
+        #await message.edit(embed=event.to_embed(interaction), view=EventsButton(database=self.database))
         await message.pin()
         
         await interaction.followup.send(content=f'Evento **{event.id}** creado con éxito.\n **Link**: {event.link}', ephemeral=True)
@@ -731,7 +746,7 @@ class Events(commands.Cog):
                 
                 await _manage_check(interaction, not check, msg)
                     
-                await message.edit(content=event.summarize(), embed=event.to_embed(interaction))
+                await self._safe_edit(event, message, interaction)
                 await interaction.followup.send(content=f'{author} se ha apuntado a **{id}**. \n **Link**: {event.link}', ephemeral=True)
                 _log_event(self.database, event, status='ACTIVE', ongoing=True)   
 
@@ -770,7 +785,7 @@ class Events(commands.Cog):
                 
                 await _manage_check(interaction, not check, msg)
                     
-                await message.edit(content=event.summarize(), embed=event.to_embed(interaction))
+                await self._safe_edit(event, message, interaction)
                 await interaction.followup.send(content=f'{author} ha salido de **{id}**.', ephemeral=True)
                 _log_event(self.database, event, status='ACTIVE', ongoing=True)   
                 print(' <EVENTOS> Quitado con exito')
@@ -839,7 +854,7 @@ class Events(commands.Cog):
                     await interaction.followup.send(content=f'Error al modificar la evento: {e}', ephemeral=True)
                     return
                 
-                await message.edit(content=event.summarize(), embed=event.to_embed(interaction))
+                await self._safe_edit(event, message, interaction)
                 await interaction.followup.send(content=f'Evento **{id}** modificado con éxito. \n **Link**: {event.link}', ephemeral=True)
                 _log_event(self.database, event, status='ACTIVE', ongoing=True)
                 print(' <EVENTOS> Evento modificado con exito')   
@@ -881,8 +896,7 @@ class Events(commands.Cog):
                 
                 await _manage_check(interaction, not check, msg)
                 
-                await message.edit(content=event.summarize(), 
-                                   embed=event.to_embed(interaction))
+                await self._safe_edit(event, message, interaction)
                 
                 check_event = True
         
@@ -896,8 +910,7 @@ class Events(commands.Cog):
                 
                 await _manage_check(interaction, not check, msg)
                 
-                await message.edit(content=event.summarize(), 
-                                   embed=event.to_embed(interaction))
+                await self._safe_edit(event, message, interaction)
                 await interaction.followup.send(content=f'{author} se ha movido de **{id}** a **{nueva_id}**. \n **Link**: {event.link}', ephemeral=True)
                 _log_event(self.database, event, status='ACTIVE', ongoing=True)  
                 print(' <EVENTOS> Movido con exito')
