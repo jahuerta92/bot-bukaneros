@@ -500,7 +500,7 @@ class Events(commands.Cog):
             embeds = message.embeds
             if len(embeds) == 1:
                 embed = embeds[0]
-                if Evento.EVENT_TAG in embed.footer.text:
+                if (embed.footer.text != None) and (Evento.EVENT_TAG in embed.footer.text):
                     check, event = Evento.create(embed)
                     events.append((check, event, message))
         return events
