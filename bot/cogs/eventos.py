@@ -500,7 +500,7 @@ class Events(commands.Cog):
             embeds = message.embeds
             if len(embeds) == 1:
                 embed = embeds[0]
-                if (embed.footer.text is not None) and (Evento.EVENT_TAG in embed.footer.text):
+                if Evento.EVENT_TAG in embed.footer.text:
                     check, event = Evento.create(embed)
                     events.append((check, event, message))
         return events
@@ -640,8 +640,7 @@ class Events(commands.Cog):
                                                  embed=event.to_embed(interaction),
                                                  )
         event.set_link(message.jump_url)
-        await self._safe_edit(event, message, interaction)
-        #await message.edit(embed=event.to_embed(interaction), view=EventsButton(database=self.database))
+        await message.edit(embed=event.to_embed(interaction), view=EventsButton(database=self.database))
         await message.pin()
         
         await interaction.followup.send(content=f'Evento **{event.id}** creado con éxito.\n **Link**: {event.link}', ephemeral=True)
