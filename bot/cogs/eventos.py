@@ -372,7 +372,6 @@ async def _manage_check(interaction, check, msg) -> Tuple[bool, str]:
     
     assert not check, f' <EVENTOS> Error..., {msg}'
 
-
 def _log_event(db, event:Evento, status:str='ACTIVE', ongoing:bool=False) -> None:
         event_dict = event.to_dict()
         
@@ -806,7 +805,12 @@ class Events(commands.Cog):
                         fin: str = None,
                         maximo: app_commands.Range[int, 0, None] = None,
                         notas: str = None,
-                        tipo: Literal["Partida de rol (Presencial)", "Partida de rol (Online)", "Juegos de mesa", "Miniaturas", "EIViva", "Otros"] = None,
+                        tipo: Literal["Partida de rol (Presencial)", 
+                                      "Partida de rol (Online)", 
+                                      "Juegos de mesa", 
+                                      "Miniaturas", 
+                                      "EIViva", 
+                                      "Otros"] = None,
                         ):
         '''
         Modifica un evento que diriges.
@@ -1045,25 +1049,24 @@ class Events(commands.Cog):
                     await msg.unpin()
                     await msg.edit(view=None)
                     _log_event(self.database, event, status='FINALIZED', ongoing=False)
+                    
                 else:
                     print(f' <EVENTOS> Evento {event.id} sigue en curso.')
                     await msg.edit(view=EventsButton(database=self.database))
-                    _log_event(self.database, event, status='ACTIVE', ongoing=True)
+                    _log_event(self.database, event, status='ACTIVE', ongoing=event.dia.date >= day)
         
-        await asyncio.sleep(20)
+        await asyncio.sleep(30)
     
-    @tasks.loop(minutes=60.0) 
+    @tasks.loop(minutes=720.0) 
     async def clean_database(self): 
         day = datetime.now()
-        if day.hour == 4:
-            # Clean the database at 4.AM
-            query = {'timestamp': {'$lt': day}, 'status': 'ACTIVE'}
-            self.database.update_many(query, {'$set': {'ongoing': False}})
-            
-            query = {'timestamp': {'$lt': day - relativedelta(days=1)}, 'status': 'ACTIVE'}
-            self.database.update_many(query, {'$set': {'status': 'FINALIZED'}})
+        # Clean the database at 4.AM
+        query = {'timestamp': {'$lt': day}, 'status': 'ACTIVE'}
+        self.database.update_many(query, {'$set': {'ongoing': False}})
 
-            print(' <EVENTOS> Base de datos limpiada.')
+        query = {'timestamp': {'$lt': day - relativedelta(days=1)}, 'status': 'ACTIVE'}
+        self.database.update_many(query, {'$set': {'status': 'FINALIZED', 'ongoing': False}})
+        print(' <EVENTOS:DATABASE> Base de datos limpiada.')
                 
 async def setup(client):
     await client.add_cog(Events(client))
