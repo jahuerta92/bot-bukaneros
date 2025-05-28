@@ -346,7 +346,7 @@ class Evento:
     def summarize(self):
         # Se devuelve una cadena con los campos del evento
         if len(self.jugadores.players) > 0:
-            participantes_str = f'Participan:\n{str(self.jugadores)}'
+            participantes_str = f'Participan:\n* `{self.director}`\n{str(self.jugadores)}'
         else:
             participantes_str = 'No hay participantes todavía.'
         return f'```{self.tipo} \n {self.director} dirige {self.nombre} el dia {self.dia} de {self.inicio} a {self.fin}\n{participantes_str}```'
