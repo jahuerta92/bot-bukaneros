@@ -374,25 +374,38 @@ async def _manage_check(interaction, check, msg) -> Tuple[bool, str]:
 
 def _log_event(db, event:Evento, status:str='ACTIVE', ongoing:bool=False) -> None:
         event_dict = event.to_dict()
+        filter = {'unique_id': event_dict['unique_id']}
+        
+        check = db.find_one(filter)
         
         for key, value in event_dict.items():
             event_dict[key] = str(value) # Sanitize values
+            
         today = date.today()
         event_dict['timestamp'] = datetime.combine(Dia(event_dict['dia']).date, datetime.min.time())
         event_dict['last_updated'] = datetime.now()
         event_dict['unique_id'] = event.unique_id()
-        event_dict['status'] = status
-        event_dict['ongoing'] = today <= Dia(event_dict['dia']).date and ongoing
         
         player_list, max_players = Jugadores.from_str(event_dict['jugadores'])
         event_dict['jugadores'] = player_list
         event_dict['numero'] = len(player_list)
         event_dict['maximo'] = max_players
-        filter = {'unique_id': event_dict['unique_id']}
+
+        if status is None:
+            if check is None:
+                status = 'ACTIVE'
+            else:
+                status = check['status']
         
-        check = db.find_one(filter)
-        
-        
+        if ongoing is None:
+            if check is None:
+                ongoing = today <= Dia(event_dict['dia']).date
+            else:
+                ongoing = check['ongoing']
+            
+        event_dict['status'] = status
+        event_dict['ongoing'] = today <= Dia(event_dict['dia']).date and ongoing
+
         if check is None:
             db.insert_one(event_dict)
         else:
@@ -436,7 +449,7 @@ class EventsButton(discord.ui.View):
         
         await message.edit(content=event.summarize(), embed=event.to_embed(interaction))
         await interaction.followup.send(content=f'{author} se ha apuntado a **{event.id}**.', ephemeral=True)
-        _log_event(self.database, event, status='ACTIVE', ongoing=True)
+        _log_event(self.database, event, status=None, ongoing=None)
 
     @discord.ui.button(label="Quitarme", style=discord.ButtonStyle.grey, emoji="❌")
     async def quitar_boton(self, interaction: discord.Interaction, button: discord.ui.Button):
@@ -455,7 +468,7 @@ class EventsButton(discord.ui.View):
                     
         await message.edit(content=event.summarize(), embed=event.to_embed(interaction))
         await interaction.followup.send(content=f'{author} se ha quitado de **{event.id}**.', ephemeral=True)
-        _log_event(self.database, event, status='ACTIVE', ongoing=True)
+        _log_event(self.database, event, status=None, ongoing=None)
     
     @discord.ui.button(label="Anular (Solo directores)", style=discord.ButtonStyle.danger, emoji="💀")
     async def anular_boton(self, interaction: discord.Interaction, button: discord.ui.Button):
@@ -490,7 +503,11 @@ class Events(commands.Cog):
         self.client = client
         print(f' <EVENTOS> Conectando a la base de datos...')
         self.database = client.db_client['Bukaneros']['Eventos']
-        print(f' <EVENTOS> Conexión establecida.')        
+        print(f' <EVENTOS> Conexión establecida.')
+        self.clean_database.start()        
+
+    def cog_unload(self):
+        self.clean_database.cancel()
 
     async def _retrieve_pinned(self, channel: discord.abc.GuildChannel) -> List[Tuple[bool, Evento, discord.Message]]:
         pinned = await channel.pins()
@@ -746,7 +763,7 @@ class Events(commands.Cog):
                     
                 await self._safe_edit(event, message, interaction)
                 await interaction.followup.send(content=f'{author} se ha apuntado a **{id}**. \n **Link**: {event.link}', ephemeral=True)
-                _log_event(self.database, event, status='ACTIVE', ongoing=True)   
+                _log_event(self.database, event, status=None, ongoing=None)   
 
                 print(' <EVENTOS> Apuntado con exito')
                 return 
@@ -785,7 +802,7 @@ class Events(commands.Cog):
                     
                 await self._safe_edit(event, message, interaction)
                 await interaction.followup.send(content=f'{author} ha salido de **{id}**.', ephemeral=True)
-                _log_event(self.database, event, status='ACTIVE', ongoing=True)   
+                _log_event(self.database, event, status=None, ongoing=None)   
                 print(' <EVENTOS> Quitado con exito')
                 return 
             
@@ -840,7 +857,10 @@ class Events(commands.Cog):
                 is_admin = any(unidecode(role.name.lower()) == unidecode(ADMIN_TAG.lower()) for role in interaction.user.roles)
                 await _manage_check(interaction, 
                                     not is_admin and event.director != author, 
-                                    f'No eres el director del evento **{event.id}**.')        
+                                    f'No eres el director del evento **{event.id}**.')
+                await _manage_check(interaction,
+                                    event.dia.date < date.today(),
+                                    'No se puede modificar un evento que ya ha pasado.')      
                 
                 try:
                     event.update_field(id=nueva_id,
@@ -893,6 +913,7 @@ class Events(commands.Cog):
         old_events = await self._retrieve_pinned(interaction.channel)
         
         check_event = False
+        old_event = None
         for ok, event, message in old_events:
             if event.is_eq_id(id):                
                 check, msg = event.remove_player(author)
@@ -902,8 +923,12 @@ class Events(commands.Cog):
                 await self._safe_edit(event, message, interaction)
                 
                 check_event = True
-        
+                old_event = event
+                
         await _manage_check(interaction, not check_event, f'No se ha encontrado el evento de origen **{id}**.')
+        
+        if check_event:
+            _log_event(self.database, old_event, status=None, ongoing=None)
         
         for ok, event, message in old_events:
             if event.id == nueva_id:
@@ -915,7 +940,7 @@ class Events(commands.Cog):
                 
                 await self._safe_edit(event, message, interaction)
                 await interaction.followup.send(content=f'{author} se ha movido de **{id}** a **{nueva_id}**. \n **Link**: {event.link}', ephemeral=True)
-                _log_event(self.database, event, status='ACTIVE', ongoing=True)  
+                _log_event(self.database, event, status=None, ongoing=None)  
                 print(' <EVENTOS> Movido con exito')
                 return
             
@@ -1043,6 +1068,7 @@ class Events(commands.Cog):
             day = date.today()
 
             old_events = await self._retrieve_pinned(message.channel)
+            
             for _, event, msg in old_events:
                 if event.dia.date < day - relativedelta(days=1):
                     print(f' <EVENTOS> Evento {event.id} ha finalizado.')
