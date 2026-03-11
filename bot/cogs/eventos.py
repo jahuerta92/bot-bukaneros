@@ -374,7 +374,7 @@ async def _manage_check(interaction, check, msg) -> Tuple[bool, str]:
 
 def _log_event(db, event:Evento, status:str='ACTIVE', ongoing:bool=False) -> None:
         event_dict = event.to_dict()
-        filter = {'unique_id': event_dict['unique_id']}
+        filter = {'unique_id': event.unique_id()}
         
         check = db.find_one(filter)
         
