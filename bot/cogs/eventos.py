@@ -485,7 +485,9 @@ class EventsButton(discord.ui.View):
                             not is_admin and event.director != author, 
                             f'No eres el director del evento **{event.id}**.')
         
-        await message.unpin()
+        while message.pinned:
+            await message.unpin()
+                    
         await message.edit(view=None)
         await interaction.followup.send(content=f'Evento **{event.id}** anulado con éxito.', ephemeral=True)
         _log_event(self.database, event, status='CANCELLED', ongoing=False)
@@ -657,7 +659,9 @@ class Events(commands.Cog):
                                                  )
         event.set_link(message.jump_url)
         await message.edit(embed=event.to_embed(interaction), view=EventsButton(database=self.database))
-        await message.pin()
+        
+        while not message.pinned:
+            await message.pin()
         
         await interaction.followup.send(content=f'Evento **{event.id}** creado con éxito.\n **Link**: {event.link}', ephemeral=True)
         _log_event(self.database, event, status='ACTIVE', ongoing=True)   
@@ -688,8 +692,11 @@ class Events(commands.Cog):
                 is_admin = any(unidecode(role.name.lower()) == unidecode(ADMIN_TAG.lower()) for role in interaction.user.roles)
                 await _manage_check(interaction, 
                                     not is_admin and event.director != author, 
-                                    f'No eres el director del evento **{event.id}**.')        
-                await message.unpin()
+                                    f'No eres el director del evento **{event.id}**.')     
+                   
+                while message.pinned:
+                    await message.unpin()           
+                         
                 await message.edit(view=None)
                 await interaction.followup.send(content=f'Evento **{id}** anulado con éxito.', ephemeral=True)
                 print(' <EVENTOS> Evento anulado con exito')        
@@ -720,7 +727,8 @@ class Events(commands.Cog):
         
         for ok, event, message in old_events:
             if event.is_eq_id(id):       
-                await message.unpin()
+                while message.pinned:
+                    await message.unpin()
                 await message.edit(view=None)
                 await interaction.followup.send(content=f'Evento **{id}** finalizado con éxito.', ephemeral=True)
                 _log_event(self.database, event, status='FINALIZED', ongoing=False)
@@ -763,6 +771,10 @@ class Events(commands.Cog):
                     
                 await self._safe_edit(event, message, interaction)
                 await interaction.followup.send(content=f'{author} se ha apuntado a **{id}**. \n **Link**: {event.link}', ephemeral=True)
+                
+                while not message.pinned:
+                    await message.pin()
+                
                 _log_event(self.database, event, status=None, ongoing=None)   
 
                 print(' <EVENTOS> Apuntado con exito')
@@ -802,6 +814,10 @@ class Events(commands.Cog):
                     
                 await self._safe_edit(event, message, interaction)
                 await interaction.followup.send(content=f'{author} ha salido de **{id}**.', ephemeral=True)
+                
+                while not message.pinned:
+                    await message.pin()
+                
                 _log_event(self.database, event, status=None, ongoing=None)   
                 print(' <EVENTOS> Quitado con exito')
                 return 
@@ -878,7 +894,12 @@ class Events(commands.Cog):
                     return
                 
                 await self._safe_edit(event, message, interaction)
+                
+                while not message.pinned:
+                    await message.pin()
+                    
                 await interaction.followup.send(content=f'Evento **{id}** modificado con éxito. \n **Link**: {event.link}', ephemeral=True)
+                            
                 _log_event(self.database, event, status='ACTIVE', ongoing=True)
                 print(' <EVENTOS> Evento modificado con exito')   
                 return
@@ -922,6 +943,9 @@ class Events(commands.Cog):
                 
                 await self._safe_edit(event, message, interaction)
                 
+                while not message.pinned:
+                    await message.pin()
+                    
                 check_event = True
                 old_event = event
                 
@@ -939,6 +963,10 @@ class Events(commands.Cog):
                 await _manage_check(interaction, not check, msg)
                 
                 await self._safe_edit(event, message, interaction)
+                
+                while not message.pinned:
+                    await message.pin()
+                    
                 await interaction.followup.send(content=f'{author} se ha movido de **{id}** a **{nueva_id}**. \n **Link**: {event.link}', ephemeral=True)
                 _log_event(self.database, event, status=None, ongoing=None)  
                 print(' <EVENTOS> Movido con exito')
@@ -1072,12 +1100,17 @@ class Events(commands.Cog):
             for _, event, msg in old_events:
                 if event.dia.date < day - relativedelta(days=1):
                     print(f' <EVENTOS> Evento {event.id} ha finalizado.')
-                    await msg.unpin()
+                    while msg.pinned:
+                        await msg.unpin()
                     await msg.edit(view=None)
                     _log_event(self.database, event, status='FINALIZED', ongoing=False)
                     
                 else:
                     print(f' <EVENTOS> Evento {event.id} sigue en curso.')
+                    
+                    while not message.pinned:
+                        await message.pin()
+                        
                     await msg.edit(view=EventsButton(database=self.database))
                     _log_event(self.database, event, status='ACTIVE', ongoing=event.dia.date >= day)
         
