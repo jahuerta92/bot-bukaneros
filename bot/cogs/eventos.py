@@ -1108,8 +1108,8 @@ class Events(commands.Cog):
                 else:
                     print(f' <EVENTOS> Evento {event.id} sigue en curso.')
                     
-                    while not message.pinned:
-                        await message.pin()
+                    while not msg.pinned:
+                        await msg.pin()
                         
                     await msg.edit(view=EventsButton(database=self.database))
                     _log_event(self.database, event, status='ACTIVE', ongoing=event.dia.date >= day)
